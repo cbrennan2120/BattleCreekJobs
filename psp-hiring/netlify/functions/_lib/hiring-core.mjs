@@ -32,7 +32,45 @@ export const DEFAULT_STORE_CONFIG = {
   preferEvenings: true,
   schedulingLink: "https://calendar.app.google/nijf5P59jCSbdGcX8",
   schedulingOwnerEmail: "cbrennan2120@gmail.com",
-  interviewWindow: "Tuesdays and Fridays from 3:00 PM to 4:00 PM, 20-minute interviews with a 10-minute buffer"
+  interviewWindow: "Tuesdays and Fridays from 3:00 PM to 4:00 PM, 20-minute interviews with a 10-minute buffer",
+  interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
+  senderName: "Chris Brennan",
+  senderTitle: "Store Team Leader",
+  inviteSubjectTemplate: "{{storeName}} interview invitation",
+  inviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for applying to {{storeName}}. After reviewing your application, I would like to invite you to the next step in our hiring process.
+
+Before booking, please confirm that you are still available for {{availabilityRequirement}} and comfortable with the starting pay rate of {{payRate}} per hour.
+
+If that still works for you, please use the link below to choose an interview time:
+{{schedulingLink}}
+
+Interview location:
+{{interviewLocation}}
+
+Current interview window:
+{{interviewWindow}}
+
+If you have any questions before scheduling, feel free to reply.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
+  declineSubjectTemplate: "{{storeName}} application update",
+  declineBodyTemplate: `Hi {{firstName}},
+
+Thank you for taking the time to apply to {{storeName}}. We appreciate your interest in joining our team.
+
+After reviewing your application, we are moving forward with candidates whose current availability and overall fit more closely match this opening.
+
+We appreciate the time and effort you put into your application, and we wish you the best in your job search.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`
 };
 
 export const STAGE_LABELS = {

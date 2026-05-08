@@ -13,7 +13,45 @@ const DEFAULT_STORE_CONFIG = {
   preferEvenings: true,
   schedulingLink: "https://calendar.app.google/nijf5P59jCSbdGcX8",
   schedulingOwnerEmail: "cbrennan2120@gmail.com",
-  interviewWindow: "Tuesdays and Fridays from 3:00 PM to 4:00 PM, 20-minute interviews with a 10-minute buffer"
+  interviewWindow: "Tuesdays and Fridays from 3:00 PM to 4:00 PM, 20-minute interviews with a 10-minute buffer",
+  interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
+  senderName: "Chris Brennan",
+  senderTitle: "Store Team Leader",
+  inviteSubjectTemplate: "{{storeName}} interview invitation",
+  inviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for applying to {{storeName}}. After reviewing your application, I would like to invite you to the next step in our hiring process.
+
+Before booking, please confirm that you are still available for {{availabilityRequirement}} and comfortable with the starting pay rate of {{payRate}} per hour.
+
+If that still works for you, please use the link below to choose an interview time:
+{{schedulingLink}}
+
+Interview location:
+{{interviewLocation}}
+
+Current interview window:
+{{interviewWindow}}
+
+If you have any questions before scheduling, feel free to reply.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
+  declineSubjectTemplate: "{{storeName}} application update",
+  declineBodyTemplate: `Hi {{firstName}},
+
+Thank you for taking the time to apply to {{storeName}}. We appreciate your interest in joining our team.
+
+After reviewing your application, we are moving forward with candidates whose current availability and overall fit more closely match this opening.
+
+We appreciate the time and effort you put into your application, and we wish you the best in your job search.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`
 };
 
 const STORAGE_KEYS = {
@@ -46,9 +84,6 @@ const STAGE_LABELS = {
   hired: "Hired"
 };
 const LEGACY_DEFAULT_ADMIN_CODE = "battlecreek-manager";
-const INTERVIEW_LOCATION = "1791 W. Columbia Ave, Battle Creek, MI";
-const MANAGER_SIGNOFF_NAME = "Chris Brennan";
-const MANAGER_SIGNOFF_TITLE = "Store Team Leader";
 
 let storeConfig = { ...DEFAULT_STORE_CONFIG };
 const formState = createInitialFormState();
@@ -85,6 +120,9 @@ const adminGateNote = document.getElementById("admin-gate-note");
 const adminLogoutButton = document.getElementById("admin-logout");
 const exportFailedSubmissionsButton = document.getElementById("export-failed-submissions");
 const clearFailedSubmissionsButton = document.getElementById("clear-failed-submissions");
+const adminTabButtons = Array.from(document.querySelectorAll("[data-admin-tab]"));
+const adminTabPanels = Array.from(document.querySelectorAll("[data-admin-panel]"));
+const healthTabAlert = document.getElementById("health-tab-alert");
 const hasApplicantPage = !!document.getElementById("application-form");
 const hasManagerPage = !!document.getElementById("manager-dashboard");
 let failedSubmissions = loadFailedSubmissions();
@@ -95,7 +133,8 @@ const adminState = {
   loadError: "",
   health: null,
   readOnlyReason: "",
-  configLoading: false
+  configLoading: false,
+  activeTab: "applicants"
 };
 const managerFilters = {
   search: "",
@@ -137,6 +176,9 @@ function initialize() {
   if (hasManagerPage) {
     adminLoginForm.addEventListener("submit", handleAdminLogin);
     adminLogoutButton.addEventListener("click", handleAdminLogout);
+    adminTabButtons.forEach((button) => {
+      button.addEventListener("click", () => setAdminTab(button.dataset.adminTab));
+    });
     exportFailedSubmissionsButton.addEventListener("click", exportFailedSubmissions);
     clearFailedSubmissionsButton.addEventListener("click", clearFailedSubmissions);
     exportCsvButton.addEventListener("click", exportApplicantsCsv);
@@ -159,8 +201,24 @@ function initialize() {
     if (seedDemoDataButton) {
       seedDemoDataButton.hidden = true;
     }
+    setAdminTab(adminState.activeTab);
     applyAdminAccessState();
   }
+}
+
+function setAdminTab(tabName) {
+  if (!tabName) return;
+  adminState.activeTab = tabName;
+  adminTabButtons.forEach((button) => {
+    const isActive = button.dataset.adminTab === tabName;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+  adminTabPanels.forEach((panel) => {
+    const isActive = panel.dataset.adminPanel === tabName;
+    panel.hidden = !isActive;
+    panel.classList.toggle("active", isActive);
+  });
 }
 
 function createInitialFormState() {
@@ -895,7 +953,18 @@ function renderDashboard() {
       : `<div class="helper-banner">No failed live submissions are currently queued.</div>`;
   }
 
+  renderHealthTabAlert();
+
   renderSelectedApplicant(filteredApplicants);
+}
+
+function renderHealthTabAlert() {
+  if (!healthTabAlert) return;
+  const intakeReachable = adminState.health?.intakeReachable ?? adminState.health?.formsReachable ?? true;
+  const hasHealthIssue = adminState.health && (!intakeReachable || !adminState.health.storageReachable || Boolean(adminState.health.unresolvedSaveFailures));
+  const hasLocalFailures = failedSubmissions.length > 0;
+  const shouldShow = Boolean(hasHealthIssue || hasLocalFailures);
+  healthTabAlert.hidden = !shouldShow;
 }
 
 function getFilteredApplicants() {
@@ -1017,7 +1086,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
           <li>Employment type: ${escapeHtml(storeConfig.employmentType)}</li>
           <li>Start date: ${escapeHtml(candidate.startDate || "Not provided")}</li>
           <li>Authorized to work: ${candidate.authorized === "yes" ? "Yes" : "Needs review"}</li>
-          <li>Interview location: ${escapeHtml(INTERVIEW_LOCATION)}</li>
+          <li>Interview location: ${escapeHtml(storeConfig.interviewLocation || DEFAULT_STORE_CONFIG.interviewLocation)}</li>
           <li>Hiring entity: ${escapeHtml(storeConfig.legalName)}</li>
         </ul>
       </section>
@@ -1055,25 +1124,17 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
         </ul>
       </section>
 
-      <section class="template-stack">
-        <article class="template-box">
-          <h4>Interview invite template</h4>
-          <p>Use once the candidate clears your schedule check and you are ready to invite them to interview.</p>
+      <section class="detail-section">
+        <h4>Email actions</h4>
+        <div class="template-box compact-template-actions">
+          <p>These buttons use the saved templates from Store Settings.</p>
           <div class="form-actions">
-            <button class="button button-primary" type="button" id="open-invite-email">Open Email</button>
-            <button class="button button-secondary" type="button" id="copy-invite-message">Copy Message</button>
+            <button class="button button-primary" type="button" id="open-invite-email">Open Interview Email</button>
+            <button class="button button-secondary" type="button" id="copy-invite-message">Copy Interview Message</button>
+            <button class="button button-secondary" type="button" id="open-decline-email">Open Decline Email</button>
+            <button class="button button-secondary" type="button" id="copy-decline-message">Copy Decline Message</button>
           </div>
-          <textarea readonly id="invite-template">${escapeHtml(buildInviteMessage(candidate))}</textarea>
-        </article>
-        <article class="template-box">
-          <h4>Decline template</h4>
-          <p>Use when the current opening is not the right fit for the candidate.</p>
-          <div class="form-actions">
-            <button class="button button-primary" type="button" id="open-decline-email">Open Email</button>
-            <button class="button button-secondary" type="button" id="copy-decline-message">Copy Message</button>
-          </div>
-          <textarea readonly id="decline-template">${escapeHtml(buildDeclineMessage(candidate))}</textarea>
-        </article>
+        </div>
       </section>
     </div>
   `;
@@ -1083,9 +1144,9 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("mark-declined")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "declined", lastAction: "mark-declined" }));
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
   document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
-  document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTemplate("invite-template"));
+  document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
   document.getElementById("open-decline-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildDeclineSubject(candidate), buildDeclineMessage(candidate))));
-  document.getElementById("copy-decline-message")?.addEventListener("click", () => copyTemplate("decline-template"));
+  document.getElementById("copy-decline-message")?.addEventListener("click", () => copyTextToClipboard(buildDeclineMessage(candidate)));
   document.getElementById("save-note")?.addEventListener("click", async () => {
     const managerNote = document.getElementById("manager-note")?.value ?? "";
     await updateCandidate(selectedApplicantId, { managerNote, lastAction: "save-note" });
@@ -1151,50 +1212,46 @@ async function deleteCandidate(id, fullName) {
 }
 
 function buildInviteSubject(candidate) {
-  return `${storeConfig.name} interview invitation`;
+  return renderMessageTemplate(storeConfig.inviteSubjectTemplate || DEFAULT_STORE_CONFIG.inviteSubjectTemplate, candidate);
 }
 
 function buildInviteMessage(candidate) {
-  return `Hi ${candidate.fullName.split(" ")[0]},
-
-Thank you for applying to ${storeConfig.name}. After reviewing your application, I would like to invite you to the next step in our hiring process.
-
-Before booking, please confirm that you are still available for ${availabilityRequirementText()} and comfortable with the starting pay rate of $${Number(storeConfig.payMin).toFixed(2)} per hour.
-
-If that still works for you, please use the link below to choose an interview time:
-${storeConfig.schedulingLink}
-
-Interview location:
-${INTERVIEW_LOCATION}
-
-Current interview window:
-${storeConfig.interviewWindow}
-
-If you have any questions before scheduling, feel free to reply.
-
-Thank you,
-${MANAGER_SIGNOFF_NAME}
-${MANAGER_SIGNOFF_TITLE}
-${storeConfig.name}`;
+  return renderMessageTemplate(storeConfig.inviteBodyTemplate || DEFAULT_STORE_CONFIG.inviteBodyTemplate, candidate);
 }
 
 function buildDeclineSubject(candidate) {
-  return `${storeConfig.name} application update`;
+  return renderMessageTemplate(storeConfig.declineSubjectTemplate || DEFAULT_STORE_CONFIG.declineSubjectTemplate, candidate);
 }
 
 function buildDeclineMessage(candidate) {
-  return `Hi ${candidate.fullName.split(" ")[0]},
+  return renderMessageTemplate(storeConfig.declineBodyTemplate || DEFAULT_STORE_CONFIG.declineBodyTemplate, candidate);
+}
 
-Thank you for taking the time to apply to ${storeConfig.name}. We appreciate your interest in joining our team.
+function getCandidateFirstName(candidate) {
+  return String(candidate?.fullName || "").trim().split(/\s+/)[0] || "there";
+}
 
-After reviewing your application, we are moving forward with candidates whose current availability and overall fit more closely match this opening.
+function getTemplateContext(candidate) {
+  return {
+    firstName: getCandidateFirstName(candidate),
+    fullName: candidate?.fullName || "",
+    storeName: storeConfig.name || DEFAULT_STORE_CONFIG.name,
+    payRate: `$${Number(storeConfig.payMin || DEFAULT_STORE_CONFIG.payMin).toFixed(2)}`,
+    availabilityRequirement: availabilityRequirementText(),
+    schedulingLink: storeConfig.schedulingLink || DEFAULT_STORE_CONFIG.schedulingLink,
+    interviewLocation: storeConfig.interviewLocation || DEFAULT_STORE_CONFIG.interviewLocation,
+    interviewWindow: storeConfig.interviewWindow || DEFAULT_STORE_CONFIG.interviewWindow,
+    senderName: storeConfig.senderName || DEFAULT_STORE_CONFIG.senderName,
+    senderTitle: storeConfig.senderTitle || DEFAULT_STORE_CONFIG.senderTitle,
+    legalName: storeConfig.legalName || DEFAULT_STORE_CONFIG.legalName
+  };
+}
 
-We appreciate the time and effort you put into your application, and we wish you the best in your job search.
-
-Thank you,
-${MANAGER_SIGNOFF_NAME}
-${MANAGER_SIGNOFF_TITLE}
-${storeConfig.name}`;
+function renderMessageTemplate(template, candidate) {
+  const context = getTemplateContext(candidate);
+  return String(template || "").replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+    return Object.prototype.hasOwnProperty.call(context, key) ? context[key] : match;
+  });
 }
 
 function buildMailtoLink(email, subject, body) {
@@ -1223,9 +1280,22 @@ function copyTemplate(id) {
   const field = document.getElementById(id);
   const text = field?.value;
   if (!text) return;
+  copyTextToClipboard(text, field);
+}
 
+function copyTextToClipboard(text, sourceField) {
   const fallbackCopy = () => {
+    const field = sourceField || document.createElement("textarea");
+    const temporaryField = !sourceField;
     try {
+      if (temporaryField) {
+        field.value = text;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.top = "-9999px";
+        field.style.left = "-9999px";
+        document.body.appendChild(field);
+      }
       field.focus();
       field.select();
       field.setSelectionRange(0, text.length);
@@ -1236,7 +1306,9 @@ function copyTemplate(id) {
         window.alert("Clipboard access is blocked. The template text is selected so you can copy it manually.");
       }
     } catch {
-      window.alert("Clipboard access is blocked. Select the template text and copy it manually.");
+      window.alert("Clipboard access is blocked. Open the email and copy the message manually.");
+    } finally {
+      if (temporaryField) field.remove();
     }
   };
 
@@ -1399,7 +1471,14 @@ function hydrateSettingsForm() {
   settingsForm.elements.namedItem("payMax").value = storeConfig.payMax;
   settingsForm.elements.namedItem("minimumHoursNeeded").value = storeConfig.minimumHoursNeeded;
   settingsForm.elements.namedItem("interviewWindow").value = storeConfig.interviewWindow;
+  settingsForm.elements.namedItem("interviewLocation").value = storeConfig.interviewLocation || DEFAULT_STORE_CONFIG.interviewLocation;
+  settingsForm.elements.namedItem("senderName").value = storeConfig.senderName || DEFAULT_STORE_CONFIG.senderName;
+  settingsForm.elements.namedItem("senderTitle").value = storeConfig.senderTitle || DEFAULT_STORE_CONFIG.senderTitle;
   settingsForm.elements.namedItem("schedulingLink").value = storeConfig.schedulingLink;
+  settingsForm.elements.namedItem("inviteSubjectTemplate").value = storeConfig.inviteSubjectTemplate || DEFAULT_STORE_CONFIG.inviteSubjectTemplate;
+  settingsForm.elements.namedItem("inviteBodyTemplate").value = storeConfig.inviteBodyTemplate || DEFAULT_STORE_CONFIG.inviteBodyTemplate;
+  settingsForm.elements.namedItem("declineSubjectTemplate").value = storeConfig.declineSubjectTemplate || DEFAULT_STORE_CONFIG.declineSubjectTemplate;
+  settingsForm.elements.namedItem("declineBodyTemplate").value = storeConfig.declineBodyTemplate || DEFAULT_STORE_CONFIG.declineBodyTemplate;
   settingsForm.elements.namedItem("requireEvenings").checked = !!storeConfig.requireEvenings;
   settingsForm.elements.namedItem("requireSaturday").checked = !!storeConfig.requireSaturday;
   settingsForm.elements.namedItem("requireSunday").checked = !!storeConfig.requireSunday;
@@ -1420,7 +1499,14 @@ async function saveSettingsFromForm() {
     employmentType: storeConfig.employmentType || DEFAULT_STORE_CONFIG.employmentType,
     schedulingOwnerEmail: storeConfig.schedulingOwnerEmail || DEFAULT_STORE_CONFIG.schedulingOwnerEmail,
     interviewWindow: elements.namedItem("interviewWindow").value.trim() || DEFAULT_STORE_CONFIG.interviewWindow,
+    interviewLocation: elements.namedItem("interviewLocation").value.trim() || DEFAULT_STORE_CONFIG.interviewLocation,
+    senderName: elements.namedItem("senderName").value.trim() || DEFAULT_STORE_CONFIG.senderName,
+    senderTitle: elements.namedItem("senderTitle").value.trim() || DEFAULT_STORE_CONFIG.senderTitle,
     schedulingLink: elements.namedItem("schedulingLink").value.trim() || DEFAULT_STORE_CONFIG.schedulingLink,
+    inviteSubjectTemplate: elements.namedItem("inviteSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteSubjectTemplate,
+    inviteBodyTemplate: elements.namedItem("inviteBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteBodyTemplate,
+    declineSubjectTemplate: elements.namedItem("declineSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.declineSubjectTemplate,
+    declineBodyTemplate: elements.namedItem("declineBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.declineBodyTemplate,
     requireEvenings: elements.namedItem("requireEvenings").checked,
     preferEvenings: !elements.namedItem("requireEvenings").checked,
     requireSaturday: elements.namedItem("requireSaturday").checked,

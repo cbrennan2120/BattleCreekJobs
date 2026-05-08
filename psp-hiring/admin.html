@@ -19,15 +19,11 @@
         </div>
         <div>
           <p class="brand-name">Pet Supplies Plus Battle Creek</p>
-          <p class="brand-tag">Manager Hiring Console</p>
+          <p class="brand-tag">Hiring Operations</p>
         </div>
       </div>
-      <nav class="topnav" aria-label="Primary">
-        <a href="#manager-dashboard">Dashboard</a>
-        <a href="#settings-card">Settings</a>
-      </nav>
       <div class="topbar-actions">
-        <a class="button button-secondary" href="/index.html">Public Application</a>
+        <a class="button button-secondary" href="/index.html">View Public Application</a>
       </div>
     </header>
 
@@ -57,10 +53,15 @@
       <aside class="manager-column" id="manager-dashboard" hidden>
         <section class="manager-panel">
           <div class="manager-header">
-            <div>
-              <p class="eyebrow">Manager dashboard</p>
-              <h2>Battle Creek hiring board</h2>
-              <p class="manager-subtitle">Review applicants, confirm weekend and pay fit, and only send the interview link after a candidate clearly qualifies.</p>
+            <div class="manager-header-copy">
+              <p class="eyebrow">Hiring operations</p>
+              <h2>Applicant Review Console</h2>
+              <p class="manager-subtitle">Review candidates, update pipeline stages, keep shared notes, and send interview or follow-up emails from one manager workspace.</p>
+              <div class="manager-header-meta" aria-label="Dashboard capabilities">
+                <span>Shared applicant pipeline</span>
+                <span>Saved email templates</span>
+                <span>Store settings</span>
+              </div>
             </div>
             <div class="topbar-actions">
               <button class="button button-secondary" type="button" id="admin-logout">Log out</button>
@@ -70,172 +71,188 @@
             </div>
           </div>
 
-          <div class="manager-buckets" id="manager-buckets"></div>
+          <nav class="admin-tabs" aria-label="Manager dashboard sections">
+            <button class="admin-tab active" type="button" data-admin-tab="applicants" aria-selected="true">Applicants</button>
+            <button class="admin-tab" type="button" data-admin-tab="settings" aria-selected="false">Store Settings</button>
+            <button class="admin-tab" type="button" data-admin-tab="health" aria-selected="false">System Health <span class="tab-alert" id="health-tab-alert" hidden></span></button>
+          </nav>
 
-          <section class="card settings-card" id="settings-card">
-            <div class="card-heading">
-              <div>
-                <p class="eyebrow">Store settings</p>
-                <h3>Hiring rules and scheduling link</h3>
-              </div>
-              <span class="status-pill neutral" id="settings-status">Loading live settings</span>
+          <section class="admin-tab-panel active" id="applicants-panel" data-admin-panel="applicants">
+            <div class="manager-buckets" id="manager-buckets"></div>
+
+            <div class="manager-card-grid">
+              <section class="card candidate-list-card">
+                <div class="card-heading">
+                  <div>
+                    <p class="eyebrow">Applicants</p>
+                    <h3>Ranked by fit</h3>
+                    <p class="manager-subtitle compact-note" id="interview-capacity-note">0 interview-ready applicants. Weekly booking capacity is 4 interviews.</p>
+                  </div>
+                  <span class="status-pill neutral" id="applicant-count">0 applicants</span>
+                </div>
+                <div class="manager-filters">
+                  <div class="field">
+                    <label for="candidate-search">Search applicants</label>
+                    <input id="candidate-search" type="search" placeholder="Name, city, or position">
+                  </div>
+                  <div class="field compact-field">
+                    <label for="stage-filter">Stage filter</label>
+                    <select id="stage-filter">
+                      <option value="all">All stages</option>
+                      <option value="new">New</option>
+                      <option value="interview">Interviewing</option>
+                      <option value="hold">Hold</option>
+                      <option value="declined">Declined</option>
+                      <option value="hired">Hired</option>
+                    </select>
+                  </div>
+                  <div class="field compact-field">
+                    <label for="bucket-filter">Fit filter</label>
+                    <select id="bucket-filter">
+                      <option value="all">All fit buckets</option>
+                      <option value="top">Top Match</option>
+                      <option value="strong">Strong Match</option>
+                      <option value="maybe">Maybe</option>
+                      <option value="review">Needs Review</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="candidate-list" class="candidate-list"></div>
+              </section>
+
+              <section class="card candidate-detail-card">
+                <div id="candidate-detail" class="candidate-detail empty-state">
+                  <h3>No applicant selected</h3>
+                  <p>Select an applicant from the live queue to review details, notes, and next steps.</p>
+                </div>
+              </section>
             </div>
-            <form id="settings-form" class="settings-form">
-              <div class="field-grid">
-                <div class="field">
-                  <label for="storeName">Store name</label>
-                  <input id="storeName" name="name">
-                </div>
-                <div class="field">
-                  <label for="legalName">Legal entity</label>
-                  <input id="legalName" name="legalName">
-                </div>
-                <div class="field">
-                  <label for="payMin">Minimum pay</label>
-                  <input id="payMin" name="payMin" type="number" step="0.25">
-                </div>
-                <div class="field">
-                  <label for="payMax">Maximum pay</label>
-                  <input id="payMax" name="payMax" type="number" step="0.25">
-                </div>
-                <div class="field">
-                  <label for="minimumHoursNeeded">Store minimum weekly hours</label>
-                  <input id="minimumHoursNeededSetting" name="minimumHoursNeeded" type="number" min="1" max="40">
-                </div>
-                <div class="field">
-                  <label for="interviewWindow">Interview window</label>
-                  <input id="interviewWindow" name="interviewWindow">
-                </div>
-              </div>
-              <div class="field">
-                <label for="schedulingLink">Scheduling link</label>
-                <input id="schedulingLink" name="schedulingLink" type="url">
-              </div>
-              <div class="field checkbox-row settings-toggles">
-                <label><input type="checkbox" name="requireEvenings"> Require evening availability</label>
-                <label><input type="checkbox" name="requireSaturday"> Require Saturday availability</label>
-                <label><input type="checkbox" name="requireSunday"> Require Sunday availability</label>
-              </div>
-              <div class="form-actions">
-                <button class="button button-primary" type="button" id="save-settings-button">Save Settings</button>
-              </div>
-            </form>
           </section>
 
-          <div class="manager-card-grid">
-            <section class="card candidate-list-card">
+          <section class="admin-tab-panel" id="settings-panel" data-admin-panel="settings" hidden>
+            <section class="card settings-card" id="settings-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">Applicants</p>
-                  <h3>Ranked by fit</h3>
+                  <p class="eyebrow">Store settings</p>
+                  <h3>Hiring rules and scheduling link</h3>
                 </div>
-                <span class="status-pill neutral" id="applicant-count">0 applicants</span>
+                <span class="status-pill neutral" id="settings-status">Loading live settings</span>
               </div>
-              <div class="manager-filters">
+              <form id="settings-form" class="settings-form">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="storeName">Store name</label>
+                    <input id="storeName" name="name">
+                  </div>
+                  <div class="field">
+                    <label for="legalName">Legal entity</label>
+                    <input id="legalName" name="legalName">
+                  </div>
+                  <div class="field">
+                    <label for="payMin">Minimum pay</label>
+                    <input id="payMin" name="payMin" type="number" step="0.25">
+                  </div>
+                  <div class="field">
+                    <label for="payMax">Maximum pay</label>
+                    <input id="payMax" name="payMax" type="number" step="0.25">
+                  </div>
+                  <div class="field">
+                    <label for="minimumHoursNeeded">Store minimum weekly hours</label>
+                    <input id="minimumHoursNeededSetting" name="minimumHoursNeeded" type="number" min="1" max="40">
+                  </div>
+                  <div class="field">
+                    <label for="interviewWindow">Interview window</label>
+                    <input id="interviewWindow" name="interviewWindow">
+                  </div>
+                  <div class="field">
+                    <label for="interviewLocation">Interview location</label>
+                    <input id="interviewLocation" name="interviewLocation">
+                  </div>
+                  <div class="field">
+                    <label for="senderName">Sender name</label>
+                    <input id="senderName" name="senderName">
+                  </div>
+                  <div class="field">
+                    <label for="senderTitle">Sender title</label>
+                    <input id="senderTitle" name="senderTitle">
+                  </div>
+                </div>
                 <div class="field">
-                  <label for="candidate-search">Search applicants</label>
-                  <input id="candidate-search" type="search" placeholder="Name, city, or position">
+                  <label for="schedulingLink">Scheduling link</label>
+                  <input id="schedulingLink" name="schedulingLink" type="url">
                 </div>
-                <div class="field compact-field">
-                  <label for="stage-filter">Stage filter</label>
-                  <select id="stage-filter">
-                    <option value="all">All stages</option>
-                    <option value="new">New</option>
-                    <option value="interview">Interviewing</option>
-                    <option value="hold">Hold</option>
-                    <option value="declined">Declined</option>
-                    <option value="hired">Hired</option>
-                  </select>
+                <div class="field checkbox-row settings-toggles">
+                  <label><input type="checkbox" name="requireEvenings"> Require evening availability</label>
+                  <label><input type="checkbox" name="requireSaturday"> Require Saturday availability</label>
+                  <label><input type="checkbox" name="requireSunday"> Require Sunday availability</label>
                 </div>
-                <div class="field compact-field">
-                  <label for="bucket-filter">Fit filter</label>
-                  <select id="bucket-filter">
-                    <option value="all">All fit buckets</option>
-                    <option value="top">Top Match</option>
-                    <option value="strong">Strong Match</option>
-                    <option value="maybe">Maybe</option>
-                    <option value="review">Needs Review</option>
-                  </select>
+                <div class="settings-section">
+                  <div>
+                    <p class="eyebrow">Email templates</p>
+                    <h4>Messages used by applicant email buttons</h4>
+                    <p class="manager-subtitle">Available placeholders: {{firstName}}, {{fullName}}, {{storeName}}, {{payRate}}, {{availabilityRequirement}}, {{schedulingLink}}, {{interviewLocation}}, {{interviewWindow}}, {{senderName}}, {{senderTitle}}.</p>
+                  </div>
+                  <div class="field">
+                    <label for="inviteSubjectTemplate">Interview invite subject</label>
+                    <input id="inviteSubjectTemplate" name="inviteSubjectTemplate">
+                  </div>
+                  <div class="field">
+                    <label for="inviteBodyTemplate">Interview invite message</label>
+                    <textarea id="inviteBodyTemplate" name="inviteBodyTemplate" rows="12"></textarea>
+                  </div>
+                  <div class="field">
+                    <label for="declineSubjectTemplate">Decline subject</label>
+                    <input id="declineSubjectTemplate" name="declineSubjectTemplate">
+                  </div>
+                  <div class="field">
+                    <label for="declineBodyTemplate">Decline message</label>
+                    <textarea id="declineBodyTemplate" name="declineBodyTemplate" rows="10"></textarea>
+                  </div>
                 </div>
-              </div>
-              <div id="candidate-list" class="candidate-list"></div>
+                <div class="form-actions">
+                  <button class="button button-primary" type="button" id="save-settings-button">Save Settings</button>
+                </div>
+              </form>
             </section>
-
-            <section class="card candidate-detail-card">
-              <div id="candidate-detail" class="candidate-detail empty-state">
-                <h3>No applicant selected</h3>
-                <p>Select an applicant from the live queue to review details, notes, and next steps.</p>
-              </div>
-            </section>
-          </div>
-
-          <section class="card workflow-card">
-            <div class="card-heading">
-              <div>
-                <p class="eyebrow">Interview reference</p>
-                <h3>When managers should send the booking link</h3>
-                <p class="manager-subtitle" id="interview-capacity-note">0 interview-ready applicants. Weekly booking capacity is 4 interviews.</p>
-              </div>
-            </div>
-            <div class="workflow-grid compact-workflow">
-              <article>
-                <span>1</span>
-                <h4>Check weekends</h4>
-                <p>Do not send the link unless the applicant can cover required weekend shifts.</p>
-              </article>
-              <article>
-                <span>2</span>
-                <h4>Confirm pay</h4>
-                <p>Do not send the link unless the applicant is comfortable with $13.73 per hour.</p>
-              </article>
-              <article>
-                <span>3</span>
-                <h4>Move to interviewing</h4>
-                <p>Change the pipeline stage to Interviewing before sending the template.</p>
-              </article>
-              <article>
-                <span>4</span>
-                <h4>Use the booking page</h4>
-                <p>Only qualified candidates should receive the Google Calendar link.</p>
-              </article>
-            </div>
           </section>
 
-          <section class="card workflow-card">
-            <div class="card-heading">
-              <div>
-                <p class="eyebrow">Submission health</p>
-                <h3>Live intake status</h3>
-                <p class="manager-subtitle" id="submission-health-note">No pending live submission issues detected.</p>
+          <section class="admin-tab-panel" id="health-panel" data-admin-panel="health" hidden>
+            <section class="card workflow-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">System health</p>
+                  <h3>Live intake status</h3>
+                  <p class="manager-subtitle" id="submission-health-note">No pending live submission issues detected.</p>
+                </div>
               </div>
-            </div>
-            <div class="workflow-grid compact-workflow">
-              <article>
-                <span>1</span>
-                <h4>Public form</h4>
-                <p>Applicants submit from the public page only.</p>
-              </article>
-              <article>
-                <span>2</span>
-                <h4>Netlify capture</h4>
-                <p>Live submissions should post to the Netlify intake form.</p>
-              </article>
-              <article>
-                <span>3</span>
-                <h4>Failure queue</h4>
-                <p>Failed live posts are tracked locally for follow-up.</p>
-              </article>
-              <article>
-                <span>4</span>
-                <h4>Manager review</h4>
-                <p>Only after review should interview links be sent.</p>
-              </article>
-            </div>
-            <div class="submission-queue" id="submission-queue"></div>
-            <div class="form-actions">
-              <button class="button button-secondary" type="button" id="export-failed-submissions">Export failed queue</button>
-              <button class="button button-secondary" type="button" id="clear-failed-submissions">Clear failed queue</button>
-            </div>
+              <div class="workflow-grid compact-workflow">
+                <article>
+                  <span>1</span>
+                  <h4>Public form</h4>
+                  <p>Applicants submit from the public page only.</p>
+                </article>
+                <article>
+                  <span>2</span>
+                  <h4>Shared intake</h4>
+                  <p>Live applications should appear in the manager applicant list after submission.</p>
+                </article>
+                <article>
+                  <span>3</span>
+                  <h4>Failure queue</h4>
+                  <p>Failed live posts are tracked locally for follow-up.</p>
+                </article>
+                <article>
+                  <span>4</span>
+                  <h4>Manager review</h4>
+                  <p>Review storage must be reachable for notes and stage changes.</p>
+                </article>
+              </div>
+              <div class="submission-queue" id="submission-queue"></div>
+              <div class="form-actions">
+                <button class="button button-secondary" type="button" id="export-failed-submissions">Export failed queue</button>
+                <button class="button button-secondary" type="button" id="clear-failed-submissions">Clear failed queue</button>
+              </div>
+            </section>
           </section>
         </section>
       </aside>
