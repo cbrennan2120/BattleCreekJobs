@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Supplies Plus Battle Creek Hiring Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark brand-logo-stack" aria-label="Pet Supplies Plus logo">
+          <div class="brand-logo-wordmark">
+            <span class="brand-logo-line">PET SUPPLIES</span>
+            <span class="brand-logo-line brand-logo-line-plus">PLUS.</span>
+          </div>
+          <p class="brand-logo-tagline">Neighborly hiring. Minus the hassle.</p>
+        </div>
+        <div>
+          <p class="brand-name">Pet Supplies Plus Battle Creek</p>
+          <p class="brand-tag">Battle Creek Hiring Hub</p>
+        </div>
+      </div>
+      <nav class="topnav" aria-label="Primary">
+        <a href="#values">Values</a>
+        <a href="#application">Application</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="button button-primary" type="button" data-jump="application">Start Application</button>
+      </div>
+    </header>
+
+    <main class="single-column-layout">
+      <section class="applicant-column">
+        <section class="hero-panel">
+          <div class="hero-copy">
+            <p class="kicker">Careers at Pet Supplies Plus Battle Creek</p>
+            <h1>Love pets? Love your people. You'll fit right in.</h1>
+            <p class="hero-text">
+              Join a local pet team that works hard, supports each other, and treats every neighbor like family because around here, we know that pets own people.
+              We share the schedule, pay, and day-to-day expectations early so you can quickly decide whether this role feels like the right fit.
+            </p>
+            <div class="hero-actions">
+              <button class="button button-primary" type="button" data-jump="application">Start My Application</button>
+            </div>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="hero-card hero-card-main">
+              <p class="hero-card-label">Your Neighborhood Pet Store</p>
+              <p class="hero-card-title">We aren't just a warehouse filled with pet products. We're your locally owned neighborhood pet store, built on the belief that pets own people.</p>
+            </div>
+            <div class="hero-card hero-card-accent">
+              <span>Clear expectations</span>
+              <strong>Know the schedule up front</strong>
+            </div>
+            <div class="hero-card hero-card-accent alt">
+              <span>More Than A Paycheck</span>
+              <strong>Pet lovers, team support, and employee discounts</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="value-strip" id="values">
+          <article class="value-item">
+            <h2>Neighborly</h2>
+            <p>We welcome everyone like real neighbors, learn names, and build meaningful local relationships.</p>
+          </article>
+          <article class="value-item">
+            <h2>Petcentric</h2>
+            <p>We put pets and pet parents first, keeping their health, comfort, and well-being ahead of routine tasks.</p>
+          </article>
+          <article class="value-item">
+            <h2>Trustworthy and knowledgeable</h2>
+            <p>We keep a safe, clean, dependable store and keep learning so we can make the best recommendations for pets.</p>
+          </article>
+        </section>
+
+        <section class="application-panel" id="application">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Applicant workflow</p>
+              <h2>Your application progress</h2>
+            </div>
+            <button class="link-button" type="button" id="reset-form">Reset form</button>
+          </div>
+
+          <div class="submission-banner" id="submission-banner" hidden>
+            <div>
+              <strong>Thank you for applying</strong>
+              <p>We appreciate your time and your interest in joining Pet Supplies Plus Battle Creek. Our team reviews each application carefully, and qualified applicants are contacted as quickly as possible for the next step.</p>
+            </div>
+            <button class="button button-secondary" type="button" id="start-new-application">Start another application</button>
+          </div>
+
+          <ol class="progress-rail" id="progress-rail"></ol>
+
+          <div class="application-grid">
+            <section class="card form-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow" id="step-eyebrow">Step 1</p>
+                  <h3 id="step-title">Basic Information</h3>
+                </div>
+                <span class="status-pill" id="fit-preview">In progress</span>
+              </div>
+              <div class="helper-banner">
+                Our Paw Print values matter here: neighborly, petcentric, trustworthy, and knowledgeable.
+              </div>
+              <form id="application-form">
+                <div id="step-content" class="step-content"></div>
+                <div class="form-actions">
+                  <button class="button button-secondary" type="button" id="prev-step">Back</button>
+                  <button class="button button-primary" type="button" id="next-step">Continue</button>
+                </div>
+              </form>
+            </section>
+
+            <aside class="card checkpoint-card">
+              <div class="card-heading">
+                <div>
+                  <p class="eyebrow">Before You Apply</p>
+                  <h3>What to know about this role</h3>
+                </div>
+              </div>
+              <div class="checkpoint-list">
+                <article>
+                  <h4>Weekend availability is part of the role</h4>
+                  <p>This is a part-time store opening, and weekend availability is important for the team schedule. If weekends work well for you, this role is more likely to be a strong match.</p>
+                </article>
+                <article>
+                  <h4>We share pay early and clearly</h4>
+                  <p>This role currently starts at $13.73 per hour. Team members are also eligible for biannual reviews and raises up to 5%, so we want applicants to have a clear picture of both the starting rate and the opportunity to grow.</p>
+                </article>
+                <article>
+                  <h4>Pet passion matters, and so does store work</h4>
+                  <p>This role combines helping pet parents with cashier work, stocking, cleaning, lifting, and general support around the store.</p>
+                </article>
+              </div>
+              <div class="range-box">
+                <p class="range-label">What this opportunity includes</p>
+                <strong id="checkpoint-range">$13.73 / hr</strong>
+                <p class="range-caption" id="checkpoint-range-caption">Part-time only. Typical weekly range is 12-35 hours.</p>
+                <p class="range-caption range-highlight">Eligible for biannual reviews and raises up to 5%.</p>
+                <p class="range-caption">Hiring for Stock Team Member, Cashier Team Member, and Service Team Member.</p>
+              </div>
+              <div class="next-steps-box">
+                <h4>What happens after you apply</h4>
+                <ul>
+                  <li>We review your schedule, role fit, and current store needs.</li>
+                  <li>If the opening matches what you are looking for, we move quickly to the next step.</li>
+                  <li>Interviews are booked through Google Calendar after manager review.</li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <form
+    name="battle-creek-application"
+    method="POST"
+    data-netlify="true"
+    netlify-honeypot="bot-field"
+    hidden
+  >
+    <input type="hidden" name="form-name" value="battle-creek-application">
+    <input type="text" name="bot-field">
+    <input type="text" name="fullName">
+    <input type="email" name="email">
+    <input type="text" name="phone">
+    <input type="text" name="city">
+    <input type="text" name="position">
+    <input type="text" name="hoursWanted">
+    <input type="text" name="minimumHoursNeeded">
+    <input type="text" name="expectedPay">
+    <input type="text" name="availabilityPercent">
+    <input type="text" name="bucketLabel">
+    <textarea name="submissionPayload"></textarea>
+  </form>
+
+  <script src="app.js"></script>
+</body>
+</html>

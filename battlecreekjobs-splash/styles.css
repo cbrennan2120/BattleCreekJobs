@@ -1,0 +1,361 @@
+:root {
+  --paper: #f3e8cb;
+  --paper-deep: #eadbb7;
+  --ink: #1f1a12;
+  --muted: #5f5647;
+  --green: #11813a;
+  --green-deep: #0e5d2b;
+  --red: #b53b28;
+  --gold: #d0a53f;
+  --line: rgba(31, 26, 18, 0.18);
+  --surface: rgba(255, 251, 240, 0.82);
+  --shadow: 0 22px 55px rgba(74, 53, 20, 0.16);
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.72), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(17, 129, 58, 0.08), transparent 24%),
+    linear-gradient(180deg, var(--paper), var(--paper-deep));
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.splash-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 22px auto 40px;
+  display: grid;
+  gap: 18px;
+}
+
+.masthead,
+.front-page,
+.customer-strip,
+.comic-strip,
+.contact-strip {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: var(--shadow);
+}
+
+.masthead {
+  border-radius: var(--radius-xl);
+  padding: 24px 30px 26px;
+  text-align: center;
+  border-bottom: 6px double var(--line);
+}
+
+.masthead-kicker,
+.masthead-subhead,
+.section-label,
+.classified-title {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.masthead-kicker,
+.section-label {
+  color: var(--green-deep);
+  font-size: 0.8rem;
+  font-weight: 800;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.masthead h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(3rem, 6vw, 5.4rem);
+  line-height: 0.94;
+  text-transform: uppercase;
+}
+
+.masthead-subhead {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.front-page {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
+  gap: 18px;
+}
+
+.lead-story {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  padding-right: 18px;
+  border-right: 1px solid var(--line);
+}
+
+.logo-panel,
+.classified-box,
+.customer-card,
+.comic-panel {
+  background: rgba(255, 252, 244, 0.76);
+  border: 1px solid var(--line);
+}
+
+.logo-panel {
+  border-radius: 26px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+}
+
+.hero-logo {
+  width: min(100%, 520px);
+  height: auto;
+}
+
+.lead-copy {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.lead-copy h2,
+.customer-copy h3,
+.comic-panel h4 {
+  margin: 0;
+}
+
+.lead-copy h2 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.98;
+}
+
+.lead-copy p,
+.customer-copy p,
+.comic-panel p,
+.classified-list li {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.62;
+}
+
+.lead-highlight {
+  color: var(--ink) !important;
+  font-weight: 700;
+}
+
+.classified-box {
+  border-radius: 24px;
+  padding: 20px;
+  align-self: start;
+}
+
+.classified-title {
+  color: var(--red);
+  font-size: 1rem;
+  font-weight: 900;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--red);
+}
+
+.classified-list {
+  margin: 16px 0 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.customer-strip {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+}
+
+.customer-card {
+  margin-top: 12px;
+  border-radius: 24px;
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.customer-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.customer-copy h3 {
+  font-size: 2rem;
+}
+
+.customer-actions {
+  min-width: 220px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-weight: 800;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button-primary {
+  color: white;
+  background: linear-gradient(135deg, var(--green), var(--green-deep));
+  box-shadow: 0 12px 18px rgba(17, 129, 58, 0.24);
+}
+
+.comic-strip {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.contact-strip {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+}
+
+.contact-card {
+  margin-top: 12px;
+  border-radius: 24px;
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  background: rgba(255, 252, 244, 0.76);
+  border: 1px solid var(--line);
+}
+
+.contact-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.contact-copy h3,
+.contact-copy p {
+  margin: 0;
+}
+
+.contact-copy h3 {
+  font-size: 1.8rem;
+}
+
+.contact-copy p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(17, 129, 58, 0.12);
+  border: 1px solid rgba(17, 129, 58, 0.22);
+  color: var(--green-deep);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-weight: 800;
+}
+
+.comic-panel {
+  border-radius: 22px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+  min-height: 100%;
+}
+
+.panel-number {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(17, 129, 58, 0.12);
+  color: var(--green-deep);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-weight: 900;
+}
+
+.comic-panel h4 {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 980px) {
+  .front-page,
+  .lead-story,
+  .customer-card,
+  .comic-strip,
+  .contact-card {
+    grid-template-columns: 1fr;
+  }
+
+  .lead-story {
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+  }
+
+  .customer-actions {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .splash-shell {
+    width: min(100%, calc(100% - 20px));
+    margin: 18px auto 28px;
+  }
+
+  .masthead,
+  .front-page,
+  .customer-strip,
+  .comic-strip,
+  .contact-strip {
+    padding: 20px;
+  }
+
+  .masthead h1 {
+    font-size: 2.5rem;
+  }
+
+  .lead-copy h2 {
+    font-size: 2rem;
+  }
+
+  .customer-copy h3 {
+    font-size: 1.6rem;
+  }
+}

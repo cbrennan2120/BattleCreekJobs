@@ -1,0 +1,24 @@
+{
+  "name": "new-project-2",
+  "version": "1.0.0",
+  "description": "This is a lightweight hiring workflow prototype for a small-store hiring process.",
+  "main": "app.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "serve": "python -m http.server 4173",
+    "check": "node --check app.js && node --check netlify/functions/_lib/hiring-core.mjs && node --check netlify/functions/admin-login.mjs && node --check netlify/functions/admin-logout.mjs && node --check netlify/functions/admin-session.mjs && node --check netlify/functions/admin-health.mjs && node --check netlify/functions/admin-applicants.mjs && node --check netlify/functions/application-intake.mjs && node --check netlify/functions/store-config.mjs",
+    "test": "npm run check"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.4",
+    "@netlify/functions": "^5.2.0",
+    "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "netlify-cli": "^26.0.0"
+  }
+}

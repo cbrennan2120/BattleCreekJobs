@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.netlify/
+**/.netlify/
+.deploy-src/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+temp-*.html
+live-audit-*.png
+review-*.png
