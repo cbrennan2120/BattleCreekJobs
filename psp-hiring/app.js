@@ -608,6 +608,10 @@ function bindStepInputs() {
       } else if (element.type !== "checkbox") {
         formState[element.name] = element.value;
       }
+      if (element.name === "position") {
+        const roleHelper = stepContent.querySelector(".role-helper");
+        if (roleHelper) roleHelper.textContent = renderRoleSummary(formState.position);
+      }
       fitPreview.textContent = previewFitState();
     };
 
