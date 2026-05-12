@@ -230,7 +230,7 @@ function createInitialFormState() {
     city: "",
     ageBand: "",
     authorized: "",
-    position: "Service Team Member",
+    position: "Stock Team Member",
     hoursWanted: "20-29",
     startDate: "",
     minimumHoursNeeded: "",
@@ -327,7 +327,7 @@ function renderBasicStep() {
       <div class="field">
         <label for="position">Position of interest</label>
         <select id="position" name="position">
-          ${renderOptions(["Stock Team Member", "Cashier Team Member", "Service Team Member"], formState.position)}
+          ${renderOptions(["Stock Team Member", "Cashier Team Member"], formState.position)}
         </select>
         <div class="helper-banner role-helper">${renderRoleSummary(formState.position)}</div>
       </div>
@@ -381,9 +381,8 @@ function renderBasicStep() {
 
 function renderRoleSummary(position) {
   const summaries = {
-    "Stock Team Member": "A strong fit if you enjoy staying active, keeping the store organized, and making sure pet parents can find what they need.",
-    "Cashier Team Member": "A strong fit if you enjoy helping people, keeping checkout smooth, and creating a friendly first impression for every neighbor.",
-    "Service Team Member": "A strong fit if you like variety, enjoy helping people, and are comfortable supporting the store wherever help is needed."
+    "Stock Team Member": "Stock Team Members help keep the store full, clean, and easy to shop. This role includes stocking shelves, organizing products, helping with customer carry-outs, handling 50 lb. bags of pet food, and supporting general retail tasks throughout the store.",
+    "Cashier Team Member": "Cashier Team Members run the front register, help neighbors, support store cleanliness, and help care for our small animals, reptiles, amphibians, and arachnids."
   };
 
   return summaries[position] || "Choose the role that best matches how you like to work in the store.";
@@ -480,9 +479,8 @@ function renderPayStep() {
 
 function renderFitStep() {
   const roleLead = {
-    "Stock Team Member": "Passion for pets. Plus the roll-up-your-sleeves work. This is a hands-on role built around unloading, lifting, stocking, cleaning, climbing ladders, and keeping the store organized for our neighbors.",
-    "Cashier Team Member": "Passion for pets. Plus the roll-up-your-sleeves work. This role is centered on helping neighbors, running the register, staying organized, and stepping into store tasks wherever needed.",
-    "Service Team Member": "Passion for pets. Plus the roll-up-your-sleeves work. This role mixes helping neighbors with stocking, cleaning, lifting, and keeping the pet center running smoothly."
+    "Stock Team Member": "Passion for pets. Plus the roll-up-your-sleeves work. Stock Team Members help keep the store full, clean, and easy to shop through stocking, organizing product, customer carry-outs, 50 lb. pet food bags, cleaning, ladders, and general retail support.",
+    "Cashier Team Member": "Passion for pets. Plus the roll-up-your-sleeves work. Cashier Team Members run the front register, help neighbors, support store cleanliness, and help care for our small animals, reptiles, amphibians, and arachnids."
   }[formState.position] || "Passion for pets. Plus the roll-up-your-sleeves work. This role mixes helping neighbors with register work, stocking, cleaning, lifting, and keeping the pet center running smoothly.";
 
   return `
@@ -496,7 +494,7 @@ function renderFitStep() {
         <label class="choice-card" for="canLift-yes">
           <input id="canLift-yes" type="radio" name="canLift" value="yes" ${formState.canLift === "yes" ? "checked" : ""}>
           <span>
-            <h4>I am comfortable with lifting, stocking, cleaning, being on my feet, lifting up to 40 pounds, and climbing ladders.</h4>
+            <h4>I am comfortable with lifting, stocking, cleaning, being on my feet, handling heavy pet food bags, and climbing ladders.</h4>
             <p>This includes handling pet food, helping neighbors, and supporting the day-to-day work of the store.</p>
           </span>
         </label>
@@ -1354,7 +1352,7 @@ function buildDemoApplicants() {
       email: "jordan@example.com",
       phone: "555-210-3411",
       city: "Battle Creek",
-      position: "Service Team Member",
+      position: "Stock Team Member",
       ageBand: "18+",
       authorized: "yes",
       hoursWanted: "20-29",
