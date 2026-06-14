@@ -936,18 +936,15 @@ function renderDashboard() {
       level2List.innerHTML = `<div class="empty-state"><div><h3>Loading...</h3></div></div>`;
     } else if (level2Applicants.length) {
       level2List.innerHTML = level2Applicants.map(app => `
-        <article class="candidate-item" style="cursor: default; align-items: flex-start;">
+        <article class="candidate-item" style="cursor: default; align-items: center;">
           <div style="flex-grow: 1;">
             <strong>${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")}</strong>
-            <p>${escapeHtml(app.email || app.data?.email || "")}</p>
-            <div style="margin-top: 1rem; font-size: 0.85rem; color: #4b5563; display: grid; gap: 0.5rem;">
-              ${formatLevel2Data(app)}
-            </div>
+            <p>${escapeHtml(app.phone || app.data?.phone || "")} • ${escapeHtml(app.email || app.data?.email || "")}</p>
           </div>
-          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; min-width: 100px;">
-            <p>${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</p>
-            <button class="button button-danger" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" type="button" onclick="deleteLevel2Applicant('${app.id}')">Delete</button>
-            <button class="button button-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" type="button" onclick="window.print()">Print</button>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <p style="margin: 0;">${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</p>
+            <button class="button button-danger" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" type="button" onclick="deleteLevel2Applicant('${app.id}')">Delete</button>
+            <button class="button button-primary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" type="button" onclick="printLevel2Applicant('${app.id}')">View / Print</button>
           </div>
         </article>
       `).join("");
@@ -1321,6 +1318,42 @@ function formatLevel2Data(app) {
   
   return html;
 }
+
+window.printLevel2Applicant = function(appId) {
+  const app = level2Applicants.find(a => a.id === appId);
+  if (!app) return;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Application - ${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")}</title>
+      <style>
+        body { font-family: "Segoe UI", sans-serif; line-height: 1.6; color: #333; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        h1 { margin-top: 0; font-size: 1.75rem; border-bottom: 2px solid #00af41; padding-bottom: 0.5rem; }
+        .section { margin-bottom: 1.5rem; }
+        .key { font-weight: bold; color: #555; }
+        @media print { body { padding: 0; } }
+      </style>
+    </head>
+    <body onload="window.print()">
+      <h1>${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")} - Level 2 Application</h1>
+      <div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #fcf8f0; padding: 1rem; border-radius: 8px;">
+        <div><span class="key">Email:</span> ${escapeHtml(app.email || app.data?.email || "")}</div>
+        <div><span class="key">Phone:</span> ${escapeHtml(app.phone || app.data?.phone || "")}</div>
+        <div><span class="key">Date Submitted:</span> ${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</div>
+      </div>
+      <div style="font-size: 1.05rem;">
+        ${formatLevel2Data(app)}
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(html);
+  printWindow.document.close();
+};
 
 function buildLevel2InviteSubject(candidate) {
   return renderMessageTemplate(storeConfig.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate, candidate);

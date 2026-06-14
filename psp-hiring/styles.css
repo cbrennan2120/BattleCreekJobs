@@ -1684,7 +1684,7 @@ a {
     background: white;
     color: black;
   }
-  .topbar, .manager-sidebar, .manager-controls, .candidate-list-card, .form-actions, .admin-tabs, #admin-logout-button, .manager-header {
+  .topbar, .brand-lockup, .manager-sidebar, .manager-controls, .candidate-list-card, .form-actions, .admin-tabs, #admin-logout-button, .manager-header {
     display: none !important;
   }
   .page-shell, .manager-panel, .candidate-detail-container, .manager-layout, .candidate-detail {
