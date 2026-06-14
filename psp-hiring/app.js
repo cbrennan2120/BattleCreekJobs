@@ -1290,32 +1290,85 @@ async function deleteLevel2Applicant(submissionId) {
 }
 
 function formatLevel2Data(app) {
-  const skipKeys = ["id", "created_at", "fullName", "email", "data", "payload", "level2Payload", "form_name", "submittedAt"];
+  const qMap = {
+    hoursPerWeek: "How many hours per week are you hoping to work?",
+    schedulingRestrictions: "Are there any scheduling restrictions we should know about?",
+    excellentAttendance: "What does excellent attendance mean to you?",
+    absences: "In the last 12 months at your most recent job, how many times were you absent from a scheduled shift?",
+    unexpectedLate: "Tell us about a time something unexpected happened that could have made you late or miss work. What did you do?",
+    outOfStock: "A customer comes in looking for a product that is out of stock. How would you handle the situation?",
+    greatCustomerService: "Tell us about a time you provided great customer service.",
+    whyPsp: "Why do you want to work at Pet Supplies Plus?",
+    ownPets: "Do you currently own pets?",
+    knowledgeablePets: "Which types of pets are you most knowledgeable about?",
+    goodFit: "What makes you a good fit for our team?",
+    selfTaught: "What is something you have taught yourself or learned outside of school or work in the last year?",
+    greatestStrengths: "What would your previous manager say are your greatest strengths?",
+    areaToImprove: "What is one area they would suggest you improve?",
+    physicalRequirements: "Can you perform these essential job functions with or without reasonable accommodation?",
+    first90Days: "If we hired you tomorrow, what would make you successful during your first 90 days?",
+    applicantSignature: "Applicant Signature",
+    signatureDate: "Date Signed"
+  };
+
   let html = "";
   
-  for (const [key, value] of Object.entries(app)) {
-    if (skipKeys.includes(key)) continue;
-    if (!value || (Array.isArray(value) && value.length === 0)) continue;
-    
-    // Convert camelCase to Title Case
-    const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-    
-    if (Array.isArray(value)) {
-      if (typeof value[0] === 'object') {
-        const list = value.map(item => {
-          return `<div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #e5e7eb;">
-            ${Object.entries(item).filter(([_,v])=>v).map(([k, v]) => `<div><span style="color: #6b7280; font-size: 0.8rem;">${k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span> ${escapeHtml(String(v))}</div>`).join("")}
-          </div>`;
-        }).join("");
-        html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong>${list}</div>`;
-      } else {
-        html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong> ${escapeHtml(value.join(", "))}</div>`;
-      }
-    } else {
-      html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong> ${escapeHtml(String(value))}</div>`;
+  // 1. Availability Map
+  const availMap = {
+    Morning: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].filter(d => app[`avail-${d}-morning`] === "yes"),
+    Afternoon: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].filter(d => app[`avail-${d}-afternoon`] === "yes"),
+    Evening: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].filter(d => app[`avail-${d}-evening`] === "yes")
+  };
+  let hasAvail = false;
+  let availHtml = `<div style="margin-bottom: 1.5rem; page-break-inside: avoid;"><strong style="font-size: 1.1rem; border-bottom: 1px solid #ccc; display: block; margin-bottom: 0.5rem; padding-bottom: 0.25rem;">Availability</strong>`;
+  for (const [shift, days] of Object.entries(availMap)) {
+    if (days.length > 0) {
+      hasAvail = true;
+      availHtml += `<div style="margin-bottom: 0.25rem;"><strong>${shift}:</strong> ${days.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(", ")}</div>`;
     }
   }
-  
+  availHtml += `</div>`;
+  if (hasAvail) html += availHtml;
+
+  // 2. Base Questions
+  html += `<div style="margin-bottom: 1.5rem;"><strong style="font-size: 1.1rem; border-bottom: 1px solid #ccc; display: block; margin-bottom: 0.5rem; padding-bottom: 0.25rem;">General Questions</strong>`;
+  for (const [key, q] of Object.entries(qMap)) {
+    let val = app[key];
+    if (val) {
+      if (Array.isArray(val)) val = val.join(", ");
+      html += `<div style="margin-bottom: 1rem; page-break-inside: avoid;"><strong style="color: #0f6f32;">${q}</strong><br>${escapeHtml(String(val))}</div>`;
+    }
+  }
+  html += `</div>`;
+
+  // 3. Employment
+  if (app.emp1Company || app.emp2Company) {
+    html += `<div style="margin-bottom: 1.5rem;"><strong style="font-size: 1.1rem; border-bottom: 1px solid #ccc; display: block; margin-bottom: 0.5rem; padding-bottom: 0.25rem;">Employment History</strong>`;
+    [1, 2].forEach(i => {
+      if (app[`emp${i}Company`]) {
+        html += `<div style="margin-bottom: 1rem; padding-left: 1rem; border-left: 3px solid #0f6f32; page-break-inside: avoid;">
+          <strong>${escapeHtml(app[`emp${i}Company`])}</strong> - ${escapeHtml(app[`emp${i}Position`] || "")} 
+          <br><span style="color: #666; font-size: 0.9em;">Dates: ${escapeHtml(app[`emp${i}Dates`] || "")} | Reason for Leaving: ${escapeHtml(app[`emp${i}Reason`] || "")}</span>
+          <br><strong style="font-size: 0.9em;">Duties:</strong> <span style="font-size: 0.9em;">${escapeHtml(app[`emp${i}Duties`] || "")}</span>
+        </div>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  // 4. References
+  if (app.ref1Name || app.ref2Name) {
+    html += `<div style="margin-bottom: 1.5rem;"><strong style="font-size: 1.1rem; border-bottom: 1px solid #ccc; display: block; margin-bottom: 0.5rem; padding-bottom: 0.25rem;">References</strong>`;
+    [1, 2].forEach(i => {
+      if (app[`ref${i}Name`]) {
+        html += `<div style="margin-bottom: 0.5rem; padding-left: 1rem; border-left: 3px solid #0f6f32; page-break-inside: avoid;">
+          <strong>${escapeHtml(app[`ref${i}Name`])}</strong> (${escapeHtml(app[`ref${i}Rel`] || "")}) - ${escapeHtml(app[`ref${i}Phone`] || "")}
+        </div>`;
+      }
+    });
+    html += `</div>`;
+  }
+
   return html;
 }
 
