@@ -74,7 +74,7 @@
           <nav class="admin-tabs" aria-label="Manager dashboard sections">
             <button class="admin-tab active" type="button" data-admin-tab="applicants" aria-selected="true">Applicants</button>
             <button class="admin-tab" type="button" data-admin-tab="settings" aria-selected="false">Store Settings</button>
-            <button class="admin-tab" type="button" data-admin-tab="health" aria-selected="false">System Health <span class="tab-alert" id="health-tab-alert" hidden></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="level2" aria-selected="false">Completed Applications</button>
           </nav>
 
           <section class="admin-tab-panel active" id="applicants-panel" data-admin-panel="applicants">
@@ -193,6 +193,18 @@
                     <p class="manager-subtitle">Available placeholders: {{firstName}}, {{fullName}}, {{storeName}}, {{payRate}}, {{availabilityRequirement}}, {{schedulingLink}}, {{interviewLocation}}, {{interviewWindow}}, {{senderName}}, {{senderTitle}}.</p>
                   </div>
                   <div class="field">
+                    <label for="level2Url">Level 2 Application URL</label>
+                    <input id="level2Url" name="level2Url">
+                  </div>
+                  <div class="field">
+                    <label for="level2InviteSubjectTemplate">Level 2 Invite subject</label>
+                    <input id="level2InviteSubjectTemplate" name="level2InviteSubjectTemplate">
+                  </div>
+                  <div class="field">
+                    <label for="level2InviteBodyTemplate">Level 2 Invite message</label>
+                    <textarea id="level2InviteBodyTemplate" name="level2InviteBodyTemplate" rows="12"></textarea>
+                  </div>
+                  <div class="field">
                     <label for="inviteSubjectTemplate">Interview invite subject</label>
                     <input id="inviteSubjectTemplate" name="inviteSubjectTemplate">
                   </div>
@@ -216,42 +228,17 @@
             </section>
           </section>
 
-          <section class="admin-tab-panel" id="health-panel" data-admin-panel="health" hidden>
-            <section class="card workflow-card">
+          <section class="admin-tab-panel" id="level2-panel" data-admin-panel="level2" hidden>
+            <section class="card candidate-list-card">
               <div class="card-heading">
                 <div>
-                  <p class="eyebrow">System health</p>
-                  <h3>Live intake status</h3>
-                  <p class="manager-subtitle" id="submission-health-note">No pending live submission issues detected.</p>
+                  <p class="eyebrow">Level 2 Applications</p>
+                  <h3>Completed Submissions</h3>
+                  <p class="manager-subtitle">Applicants who have submitted the follow-up application.</p>
                 </div>
+                <span class="status-pill neutral" id="level2-count">0 submitted</span>
               </div>
-              <div class="workflow-grid compact-workflow">
-                <article>
-                  <span>1</span>
-                  <h4>Public form</h4>
-                  <p>Applicants submit from the public page only.</p>
-                </article>
-                <article>
-                  <span>2</span>
-                  <h4>Shared intake</h4>
-                  <p>Live applications should appear in the manager applicant list after submission.</p>
-                </article>
-                <article>
-                  <span>3</span>
-                  <h4>Failure queue</h4>
-                  <p>Failed live posts are tracked locally for follow-up.</p>
-                </article>
-                <article>
-                  <span>4</span>
-                  <h4>Manager review</h4>
-                  <p>Review storage must be reachable for notes and stage changes.</p>
-                </article>
-              </div>
-              <div class="submission-queue" id="submission-queue"></div>
-              <div class="form-actions">
-                <button class="button button-secondary" type="button" id="export-failed-submissions">Export failed queue</button>
-                <button class="button button-secondary" type="button" id="clear-failed-submissions">Clear failed queue</button>
-              </div>
+              <div id="level2-list" class="candidate-list"></div>
             </section>
           </section>
         </section>

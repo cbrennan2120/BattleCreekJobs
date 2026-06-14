@@ -17,6 +17,23 @@ const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
+  level2Url: "/level2.html",
+  level2InviteSubjectTemplate: "{{storeName}} application next steps",
+  level2InviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for applying to {{storeName}}. You've passed our initial screening!
+
+Before we set up an interview, we would like to gather a little more information regarding your work and education history. 
+
+Please take a few minutes to complete the follow-up application here:
+{{level2Url}}
+
+If you have any questions, please let us know.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
   inviteSubjectTemplate: "{{storeName}} interview invitation",
   inviteBodyTemplate: `Hi {{firstName}},
 
@@ -89,6 +106,7 @@ let storeConfig = { ...DEFAULT_STORE_CONFIG };
 const formState = createInitialFormState();
 let currentStep = 0;
 let applicants = [];
+let level2Applicants = [];
 let selectedApplicantId = null;
 
 const progressRail = document.getElementById("progress-rail");
@@ -912,6 +930,27 @@ function renderDashboard() {
     candidateList.innerHTML = `<div class="empty-state"><div><h3>No real applicants yet</h3><p>New submissions will appear here after they are received through the live Netlify form.</p></div></div>`;
   }
 
+  const level2List = document.getElementById("level2-list");
+  const level2Count = document.getElementById("level2-count");
+  if (level2List && level2Count) {
+    level2Count.textContent = `${level2Applicants.length} submitted`;
+    if (adminState.loading) {
+      level2List.innerHTML = `<div class="empty-state"><div><h3>Loading...</h3></div></div>`;
+    } else if (level2Applicants.length) {
+      level2List.innerHTML = level2Applicants.map(app => `
+        <article class="candidate-item">
+          <div>
+            <strong>${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")}</strong>
+            <p>${escapeHtml(app.email || app.data?.email || "")}</p>
+          </div>
+          <div><p>${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</p></div>
+        </article>
+      `).join("");
+    } else {
+      level2List.innerHTML = `<div class="empty-state"><div><h3>No Level 2 submissions yet</h3></div></div>`;
+    }
+  }
+
   candidateList.querySelectorAll(".candidate-item").forEach((button) => {
     button.addEventListener("click", () => {
       selectedApplicantId = button.dataset.id;
@@ -1239,8 +1278,11 @@ function getTemplateContext(candidate) {
     fullName: candidate?.fullName || "",
     storeName: storeConfig.name || DEFAULT_STORE_CONFIG.name,
     payRate: `$${Number(storeConfig.payMin || DEFAULT_STORE_CONFIG.payMin).toFixed(2)}`,
-    availabilityRequirement: availabilityRequirementText(),
+    availabilityRequirement: Object.entries(candidate.availability || {})
+      .flatMap(([day, shifts]) => Object.entries(shifts).filter(([, selected]) => selected).map(([shift]) => `${day} ${shift}`))
+      .join(", ") || "the hours you requested",
     schedulingLink: storeConfig.schedulingLink || DEFAULT_STORE_CONFIG.schedulingLink,
+    level2Url: storeConfig.level2Url || DEFAULT_STORE_CONFIG.level2Url,
     interviewLocation: storeConfig.interviewLocation || DEFAULT_STORE_CONFIG.interviewLocation,
     interviewWindow: storeConfig.interviewWindow || DEFAULT_STORE_CONFIG.interviewWindow,
     senderName: storeConfig.senderName || DEFAULT_STORE_CONFIG.senderName,
@@ -1477,6 +1519,9 @@ function hydrateSettingsForm() {
   settingsForm.elements.namedItem("senderName").value = storeConfig.senderName || DEFAULT_STORE_CONFIG.senderName;
   settingsForm.elements.namedItem("senderTitle").value = storeConfig.senderTitle || DEFAULT_STORE_CONFIG.senderTitle;
   settingsForm.elements.namedItem("schedulingLink").value = storeConfig.schedulingLink;
+  settingsForm.elements.namedItem("level2Url").value = storeConfig.level2Url || DEFAULT_STORE_CONFIG.level2Url;
+  settingsForm.elements.namedItem("level2InviteSubjectTemplate").value = storeConfig.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate;
+  settingsForm.elements.namedItem("level2InviteBodyTemplate").value = storeConfig.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate;
   settingsForm.elements.namedItem("inviteSubjectTemplate").value = storeConfig.inviteSubjectTemplate || DEFAULT_STORE_CONFIG.inviteSubjectTemplate;
   settingsForm.elements.namedItem("inviteBodyTemplate").value = storeConfig.inviteBodyTemplate || DEFAULT_STORE_CONFIG.inviteBodyTemplate;
   settingsForm.elements.namedItem("declineSubjectTemplate").value = storeConfig.declineSubjectTemplate || DEFAULT_STORE_CONFIG.declineSubjectTemplate;
@@ -1505,6 +1550,9 @@ async function saveSettingsFromForm() {
     senderName: elements.namedItem("senderName").value.trim() || DEFAULT_STORE_CONFIG.senderName,
     senderTitle: elements.namedItem("senderTitle").value.trim() || DEFAULT_STORE_CONFIG.senderTitle,
     schedulingLink: elements.namedItem("schedulingLink").value.trim() || DEFAULT_STORE_CONFIG.schedulingLink,
+    level2Url: elements.namedItem("level2Url").value.trim() || DEFAULT_STORE_CONFIG.level2Url,
+    level2InviteSubjectTemplate: elements.namedItem("level2InviteSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate,
+    level2InviteBodyTemplate: elements.namedItem("level2InviteBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate,
     inviteSubjectTemplate: elements.namedItem("inviteSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteSubjectTemplate,
     inviteBodyTemplate: elements.namedItem("inviteBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteBodyTemplate,
     declineSubjectTemplate: elements.namedItem("declineSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.declineSubjectTemplate,
@@ -1836,9 +1884,10 @@ async function loadAdminData({ preserveSelection = false, preferredSelectionId =
   renderDashboard();
 
   try {
-    const [applicantResponse, healthResponse] = await Promise.all([
+    const [applicantResponse, healthResponse, level2Response] = await Promise.all([
       fetchJson(`${ADMIN_API_BASE}/applicants`),
-      fetchJson(`${ADMIN_API_BASE}/health`)
+      fetchJson(`${ADMIN_API_BASE}/health`),
+      fetchJson(`${ADMIN_API_BASE}/level2-applicants`).catch(() => ({ ok: true, json: async () => ({ applicants: [] }) }))
     ]);
 
     if (applicantResponse.status === 401 || healthResponse.status === 401) {
@@ -1859,7 +1908,13 @@ async function loadAdminData({ preserveSelection = false, preferredSelectionId =
 
     const applicantPayload = await applicantResponse.json();
     const healthPayload = await healthResponse.json();
+    let l2Payload = { applicants: [] };
+    if (level2Response && level2Response.ok) {
+      l2Payload = await level2Response.json();
+    }
+
     applicants = applicantPayload.applicants || [];
+    level2Applicants = l2Payload.applicants || [];
     adminState.health = healthPayload;
     adminState.readOnlyReason = healthPayload.storageReachable ? "" : "Shared review storage is unavailable. Manager edits are temporarily read-only.";
 

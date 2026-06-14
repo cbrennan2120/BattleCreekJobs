@@ -36,6 +36,23 @@ export const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
+  level2Url: "/level2.html",
+  level2InviteSubjectTemplate: "{{storeName}} application next steps",
+  level2InviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for applying to {{storeName}}. You've passed our initial screening!
+
+Before we set up an interview, we would like to gather a little more information regarding your work and education history. 
+
+Please take a few minutes to complete the follow-up application here:
+{{level2Url}}
+
+If you have any questions, please let us know.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
   inviteSubjectTemplate: "{{storeName}} interview invitation",
   inviteBodyTemplate: `Hi {{firstName}},
 
@@ -300,7 +317,10 @@ export function normalizeStoreConfig(config = {}) {
     requireSaturday: Boolean(config.requireSaturday ?? DEFAULT_STORE_CONFIG.requireSaturday),
     requireSunday: Boolean(config.requireSunday ?? DEFAULT_STORE_CONFIG.requireSunday),
     requireEvenings: Boolean(config.requireEvenings ?? DEFAULT_STORE_CONFIG.requireEvenings),
-    preferEvenings: config.requireEvenings ? false : Boolean(config.preferEvenings ?? DEFAULT_STORE_CONFIG.preferEvenings)
+    preferEvenings: config.requireEvenings ? false : Boolean(config.preferEvenings ?? DEFAULT_STORE_CONFIG.preferEvenings),
+    level2Url: config.level2Url || DEFAULT_STORE_CONFIG.level2Url,
+    level2InviteSubjectTemplate: config.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate,
+    level2InviteBodyTemplate: config.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate
   };
 }
 
