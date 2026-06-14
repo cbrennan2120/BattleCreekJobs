@@ -941,7 +941,7 @@ function renderDashboard() {
             <strong>${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")}</strong>
             <p>${escapeHtml(app.email || app.data?.email || "")}</p>
             <div style="margin-top: 1rem; font-size: 0.85rem; color: #4b5563; display: grid; gap: 0.5rem;">
-              ${Object.entries(app).filter(([k]) => !["id", "created_at", "fullName", "email", "data", "payload", "level2Payload"].includes(k)).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</div>`).join("")}
+              ${formatLevel2Data(app)}
             </div>
           </div>
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; min-width: 100px;">
@@ -1290,6 +1290,36 @@ async function deleteLevel2Applicant(submissionId) {
     adminState.loading = false;
     renderDashboard();
   }
+}
+
+function formatLevel2Data(app) {
+  const skipKeys = ["id", "created_at", "fullName", "email", "data", "payload", "level2Payload", "form_name", "submittedAt"];
+  let html = "";
+  
+  for (const [key, value] of Object.entries(app)) {
+    if (skipKeys.includes(key)) continue;
+    if (!value || (Array.isArray(value) && value.length === 0)) continue;
+    
+    // Convert camelCase to Title Case
+    const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    
+    if (Array.isArray(value)) {
+      if (typeof value[0] === 'object') {
+        const list = value.map(item => {
+          return `<div style="margin-top: 0.25rem; padding-left: 0.5rem; border-left: 2px solid #e5e7eb;">
+            ${Object.entries(item).filter(([_,v])=>v).map(([k, v]) => `<div><span style="color: #6b7280; font-size: 0.8rem;">${k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span> ${escapeHtml(String(v))}</div>`).join("")}
+          </div>`;
+        }).join("");
+        html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong>${list}</div>`;
+      } else {
+        html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong> ${escapeHtml(value.join(", "))}</div>`;
+      }
+    } else {
+      html += `<div style="margin-bottom: 0.75rem;"><strong>${escapeHtml(title)}:</strong> ${escapeHtml(String(value))}</div>`;
+    }
+  }
+  
+  return html;
 }
 
 function buildLevel2InviteSubject(candidate) {

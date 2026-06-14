@@ -1684,10 +1684,10 @@ a {
     background: white;
     color: black;
   }
-  .topbar, .manager-sidebar, .manager-controls, .candidate-list-card, .form-actions, .admin-tabs, #admin-logout-button {
+  .topbar, .manager-sidebar, .manager-controls, .candidate-list-card, .form-actions, .admin-tabs, #admin-logout-button, .manager-header {
     display: none !important;
   }
-  .page-shell, .manager-panel, .candidate-detail-container {
+  .page-shell, .manager-panel, .candidate-detail-container, .manager-layout, .candidate-detail {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
@@ -1695,10 +1695,7 @@ a {
     border: none !important;
     box-shadow: none !important;
     background: white !important;
-  }
-  .candidate-detail {
-    width: 100% !important;
-    border-radius: 0;
+    display: block !important;
   }
   .manager-layout {
     display: block !important;
