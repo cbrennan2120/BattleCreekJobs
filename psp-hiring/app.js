@@ -17,7 +17,7 @@ const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
-  level2Url: "/level2.html",
+  level2Url: "https://psp.battlecreekjobs.app/level2.html",
   level2InviteSubjectTemplate: "{{storeName}} application next steps",
   level2InviteBodyTemplate: `Hi {{firstName}},
 
@@ -197,8 +197,6 @@ function initialize() {
     adminTabButtons.forEach((button) => {
       button.addEventListener("click", () => setAdminTab(button.dataset.adminTab));
     });
-    exportFailedSubmissionsButton.addEventListener("click", exportFailedSubmissions);
-    clearFailedSubmissionsButton.addEventListener("click", clearFailedSubmissions);
     exportCsvButton.addEventListener("click", exportApplicantsCsv);
     exportJsonButton.addEventListener("click", exportApplicantsJson);
     saveSettingsButton.addEventListener("click", saveSettingsFromForm);
@@ -938,12 +936,19 @@ function renderDashboard() {
       level2List.innerHTML = `<div class="empty-state"><div><h3>Loading...</h3></div></div>`;
     } else if (level2Applicants.length) {
       level2List.innerHTML = level2Applicants.map(app => `
-        <article class="candidate-item">
-          <div>
+        <article class="candidate-item" style="cursor: default; align-items: flex-start;">
+          <div style="flex-grow: 1;">
             <strong>${escapeHtml(app.fullName || app.data?.fullName || "Unknown Applicant")}</strong>
             <p>${escapeHtml(app.email || app.data?.email || "")}</p>
+            <div style="margin-top: 1rem; font-size: 0.85rem; color: #4b5563; display: grid; gap: 0.5rem;">
+              ${Object.entries(app).filter(([k]) => !["id", "created_at", "fullName", "email", "data", "payload", "level2Payload"].includes(k)).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</div>`).join("")}
+            </div>
           </div>
-          <div><p>${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</p></div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1rem; min-width: 100px;">
+            <p>${new Date(app.created_at || app.submittedAt).toLocaleDateString()}</p>
+            <button class="button button-danger" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" type="button" onclick="deleteLevel2Applicant('${app.id}')">Delete</button>
+            <button class="button button-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" type="button" onclick="window.print()">Print</button>
+          </div>
         </article>
       `).join("");
     } else {
@@ -1114,7 +1119,10 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
         </div>
         <button class="button button-secondary" type="button" id="mark-interviewing">Mark Interviewing</button>
         <button class="button button-secondary" type="button" id="mark-declined">Mark Declined</button>
-        <button class="button button-danger" type="button" id="delete-candidate">Delete Candidate</button>
+        <div class="form-actions">
+          <button class="button button-secondary" type="button" id="print-candidate">Print Application</button>
+          <button class="button button-danger" type="button" id="delete-candidate">Delete Candidate</button>
+        </div>
       </div>
 
       <section class="detail-section">
@@ -1186,6 +1194,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("mark-interviewing")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "interview", lastAction: "mark-interviewing" }));
   document.getElementById("mark-declined")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "declined", lastAction: "mark-declined" }));
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
+  document.getElementById("print-candidate")?.addEventListener("click", () => window.print());
   document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
   document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
   document.getElementById("open-level2-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildLevel2InviteSubject(candidate), buildLevel2InviteMessage(candidate))));
@@ -1224,7 +1233,11 @@ async function updateCandidate(id, patch) {
 
     await loadAdminData({ preserveSelection: true, preferredSelectionId: id });
   } catch (error) {
-    window.alert(String(error.message || error));
+    console.error("Failed to update candidate state:", error);
+    alert(error.message || "An error occurred while updating the candidate.");
+  } finally {
+    adminState.loading = false;
+    renderDashboard();
   }
 }
 
@@ -1253,6 +1266,29 @@ async function deleteCandidate(id, fullName) {
     window.alert("Candidate deleted.");
   } catch (error) {
     window.alert(String(error.message || error));
+  }
+}
+
+async function deleteLevel2Applicant(submissionId) {
+  if (!confirm("Are you sure you want to completely delete this Level 2 application? This cannot be undone.")) {
+    return;
+  }
+
+  adminState.loading = true;
+  renderDashboard();
+
+  try {
+    const response = await fetchJson(`${ADMIN_API_BASE}/level2-applicants/${submissionId}`, { method: "DELETE" });
+    if (!response.ok) {
+      const details = await safeParseJson(response);
+      throw new Error(details?.error || "Failed to delete Level 2 applicant.");
+    }
+    await loadManagerDashboard(true);
+  } catch (error) {
+    console.error("Failed to delete Level 2 applicant:", error);
+    alert(error.message || "An error occurred while deleting.");
+    adminState.loading = false;
+    renderDashboard();
   }
 }
 

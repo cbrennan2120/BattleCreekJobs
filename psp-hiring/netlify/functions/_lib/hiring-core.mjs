@@ -36,7 +36,7 @@ export const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
-  level2Url: "/level2.html",
+  level2Url: "https://psp.battlecreekjobs.app/level2.html",
   level2InviteSubjectTemplate: "{{storeName}} application next steps",
   level2InviteBodyTemplate: `Hi {{firstName}},
 

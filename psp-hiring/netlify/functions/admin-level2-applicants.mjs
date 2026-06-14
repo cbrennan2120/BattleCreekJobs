@@ -78,9 +78,37 @@ export default async (request) => {
     }
   }
 
+  if (request.method === "DELETE") {
+    try {
+      const pathname = new URL(request.url).pathname;
+      const segments = pathname.split("/").filter(Boolean);
+      const submissionId = segments.length > 3 ? segments[3] : null;
+
+      if (!submissionId) {
+        return errorResponse("Missing applicant id.", 400);
+      }
+
+      const siteId = getSiteId();
+      if (!siteId) throw new Error("Missing SITE_ID for Netlify API access.");
+
+      const response = await fetch(`https://api.netlify.com/api/v1/submissions/${submissionId}`, {
+        method: "DELETE",
+        headers: buildApiHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Unable to delete submission (${response.status}).`);
+      }
+
+      return jsonResponse({ deleted: true, submissionId });
+    } catch (error) {
+      return errorResponse("Unable to delete Level 2 applicant.", 502, { details: String(error) });
+    }
+  }
+
   return errorResponse("Method not allowed", 405);
 };
 
 export const config = {
-  path: "/api/admin/level2-applicants"
+  path: ["/api/admin/level2-applicants", "/api/admin/level2-applicants/*"]
 };
