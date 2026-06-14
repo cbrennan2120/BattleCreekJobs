@@ -47,7 +47,18 @@ export default async (request) => {
       const submissions = await fetchLevel2Submissions();
       
       const applicants = submissions.map(sub => {
-        const payload = parseSubmissionPayload(sub);
+        let payload = parseSubmissionPayload(sub);
+        
+        // If the payload contains level2Payload as a string, parse it
+        if (payload.level2Payload && typeof payload.level2Payload === "string") {
+          try {
+            const parsedLevel2 = JSON.parse(payload.level2Payload);
+            payload = { ...payload, ...parsedLevel2 };
+          } catch (e) {
+            console.error("Failed to parse level2Payload", e);
+          }
+        }
+
         return {
           id: sub.id,
           created_at: sub.created_at,
