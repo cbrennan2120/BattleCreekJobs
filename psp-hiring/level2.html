@@ -38,7 +38,6 @@
         <section class="application-panel" id="application">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Level 2 Application</p>
               <h2>Thank you for your interest in joining our team!</h2>
             </div>
           </div>
@@ -77,6 +76,10 @@
                     <div class="field">
                       <label for="phone">Phone Number <span aria-hidden="true">*</span></label>
                       <input id="phone" name="phone" type="tel" autocomplete="tel" required>
+                    </div>
+                    <div class="field">
+                      <label for="zipCode">Zip Code <span aria-hidden="true">*</span></label>
+                      <input id="zipCode" name="zipCode" type="text" autocomplete="postal-code" required>
                     </div>
                   </div>
                 </div>
@@ -160,24 +163,29 @@
 
                 <hr class="section-divider">
 
-                <!-- Employment History -->
+                <!-- Education & Employment -->
                 <div class="step-section">
-                  <h4>Employment History</h4>
+                  <h4>Education & Employment</h4>
+                  
+                  <div class="field" style="margin-bottom: 24px;">
+                    <label for="lastGradeCompleted">Last grade completed <span aria-hidden="true">*</span></label>
+                    <input id="lastGradeCompleted" name="lastGradeCompleted" type="text" required placeholder="e.g. 11th Grade, High School Diploma, Some College">
+                  </div>
                   
                   <div class="field-group">
-                    <strong>Most Recent Employer</strong>
+                    <strong>Most Recent Employer (if applicable)</strong>
                     <div class="field-grid">
                       <div class="field">
-                        <label for="emp1Company">Company <span aria-hidden="true">*</span></label>
-                        <input id="emp1Company" name="emp1Company" type="text" autocomplete="organization" required>
+                        <label for="emp1Company">Company</label>
+                        <input id="emp1Company" name="emp1Company" type="text" autocomplete="organization">
                       </div>
                       <div class="field">
-                        <label for="emp1Position">Position <span aria-hidden="true">*</span></label>
-                        <input id="emp1Position" name="emp1Position" type="text" autocomplete="organization-title" required>
+                        <label for="emp1Position">Position</label>
+                        <input id="emp1Position" name="emp1Position" type="text" autocomplete="organization-title">
                       </div>
                       <div class="field">
-                        <label for="emp1Dates">Dates Employed <span aria-hidden="true">*</span></label>
-                        <input id="emp1Dates" name="emp1Dates" type="text" required>
+                        <label for="emp1Dates">Dates Employed</label>
+                        <input id="emp1Dates" name="emp1Dates" type="text">
                       </div>
                       <div class="field">
                         <label for="emp1Reason">Reason for Leaving</label>
@@ -185,8 +193,8 @@
                       </div>
                     </div>
                     <div class="field">
-                      <label for="emp1Duties">Briefly describe your responsibilities: <span aria-hidden="true">*</span></label>
-                      <textarea id="emp1Duties" name="emp1Duties" required></textarea>
+                      <label for="emp1Duties">Briefly describe your responsibilities:</label>
+                      <textarea id="emp1Duties" name="emp1Duties"></textarea>
                     </div>
                   </div>
 
@@ -229,7 +237,7 @@
                   </div>
 
                   <div class="field">
-                    <label for="absences">In the last 12 months at your most recent job, how many times were you absent from a scheduled shift? <span aria-hidden="true">*</span></label>
+                    <label for="absences">In the last 12 months, how many times were you absent from a scheduled shift (or missed school if no experience)? <span aria-hidden="true">*</span></label>
                     <select id="absences" name="absences" required>
                       <option value="">Select an option...</option>
                       <option value="0">0</option>
@@ -251,11 +259,6 @@
                 <div class="step-section">
                   <h4>Customer Service</h4>
                   
-                  <div class="field">
-                    <label for="outOfStock">A customer comes in looking for a product that is out of stock. How would you handle the situation? <span aria-hidden="true">*</span></label>
-                    <textarea id="outOfStock" name="outOfStock" required></textarea>
-                  </div>
-
                   <div class="field">
                     <label for="greatCustomerService">Tell us about a time you provided great customer service. <span aria-hidden="true">*</span></label>
                     <textarea id="greatCustomerService" name="greatCustomerService" required></textarea>
@@ -288,11 +291,6 @@
                     <label for="knowledgeablePets">Which types of pets are you most knowledgeable about?</label>
                     <textarea id="knowledgeablePets" name="knowledgeablePets"></textarea>
                   </div>
-
-                  <div class="field">
-                    <label for="goodFit">What makes you a good fit for our team? <span aria-hidden="true">*</span></label>
-                    <textarea id="goodFit" name="goodFit" required></textarea>
-                  </div>
                 </div>
 
                 <hr class="section-divider">
@@ -307,7 +305,7 @@
                   </div>
 
                   <div class="field">
-                    <label for="greatestStrengths">What would your previous manager say are your greatest strengths? <span aria-hidden="true">*</span></label>
+                    <label for="greatestStrengths">What would your previous manager or teacher say are your greatest strengths? <span aria-hidden="true">*</span></label>
                     <textarea id="greatestStrengths" name="greatestStrengths" required></textarea>
                   </div>
 

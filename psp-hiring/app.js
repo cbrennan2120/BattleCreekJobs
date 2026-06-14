@@ -1291,19 +1291,19 @@ async function deleteLevel2Applicant(submissionId) {
 
 function formatLevel2Data(app) {
   const qMap = {
+    zipCode: "Zip Code",
+    lastGradeCompleted: "Last grade completed",
     hoursPerWeek: "How many hours per week are you hoping to work?",
     schedulingRestrictions: "Are there any scheduling restrictions we should know about?",
     excellentAttendance: "What does excellent attendance mean to you?",
-    absences: "In the last 12 months at your most recent job, how many times were you absent from a scheduled shift?",
+    absences: "In the last 12 months, how many times were you absent from a scheduled shift (or missed school if no experience)?",
     unexpectedLate: "Tell us about a time something unexpected happened that could have made you late or miss work. What did you do?",
-    outOfStock: "A customer comes in looking for a product that is out of stock. How would you handle the situation?",
     greatCustomerService: "Tell us about a time you provided great customer service.",
     whyPsp: "Why do you want to work at Pet Supplies Plus?",
     ownPets: "Do you currently own pets?",
     knowledgeablePets: "Which types of pets are you most knowledgeable about?",
-    goodFit: "What makes you a good fit for our team?",
     selfTaught: "What is something you have taught yourself or learned outside of school or work in the last year?",
-    greatestStrengths: "What would your previous manager say are your greatest strengths?",
+    greatestStrengths: "What would your previous manager or teacher say are your greatest strengths?",
     areaToImprove: "What is one area they would suggest you improve?",
     physicalRequirements: "Can you perform these essential job functions with or without reasonable accommodation?",
     first90Days: "If we hired you tomorrow, what would make you successful during your first 90 days?",
