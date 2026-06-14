@@ -335,15 +335,15 @@
                   </ul>
                   
                   <fieldset class="field">
-                    <legend style="margin-bottom:8px;">Can you perform these essential job functions with or without reasonable accommodation? <span aria-hidden="true">*</span></legend>
-                    <div class="choice-grid">
-                      <label class="choice-card" for="physicalRequirements-yes">
-                        <input id="physicalRequirements-yes" type="radio" name="physicalRequirements" value="Yes" required>
-                        <span><h4>Yes</h4></span>
+                    <legend style="font-weight: 600; margin-bottom:12px;">Can you perform these essential job functions with or without reasonable accommodation? <span aria-hidden="true">*</span></legend>
+                    <div style="display: flex; gap: 24px; align-items: center;">
+                      <label for="physicalRequirements-yes" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input id="physicalRequirements-yes" type="radio" name="physicalRequirements" value="Yes" required style="width: 1.2rem; height: 1.2rem;">
+                        <span style="font-size: 1.05rem;">Yes</span>
                       </label>
-                      <label class="choice-card" for="physicalRequirements-no">
-                        <input id="physicalRequirements-no" type="radio" name="physicalRequirements" value="No" required>
-                        <span><h4>No</h4></span>
+                      <label for="physicalRequirements-no" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input id="physicalRequirements-no" type="radio" name="physicalRequirements" value="No" required style="width: 1.2rem; height: 1.2rem;">
+                        <span style="font-size: 1.05rem;">No</span>
                       </label>
                     </div>
                   </fieldset>
@@ -356,18 +356,18 @@
                   <h4>References</h4>
                   
                   <div class="field-grid" style="margin-bottom: 16px;">
-                    <strong>Reference #1</strong>
+                    <strong>Reference #1 (if applicable)</strong>
                     <div class="field">
-                      <label for="ref1Name">Name <span aria-hidden="true">*</span></label>
-                      <input id="ref1Name" name="ref1Name" type="text" autocomplete="name" required>
+                      <label for="ref1Name">Name</label>
+                      <input id="ref1Name" name="ref1Name" type="text" autocomplete="name">
                     </div>
                     <div class="field">
-                      <label for="ref1Rel">Relationship <span aria-hidden="true">*</span></label>
-                      <input id="ref1Rel" name="ref1Rel" type="text" required>
+                      <label for="ref1Rel">Relationship</label>
+                      <input id="ref1Rel" name="ref1Rel" type="text">
                     </div>
                     <div class="field">
-                      <label for="ref1Phone">Phone Number <span aria-hidden="true">*</span></label>
-                      <input id="ref1Phone" name="ref1Phone" type="tel" autocomplete="tel" required>
+                      <label for="ref1Phone">Phone Number</label>
+                      <input id="ref1Phone" name="ref1Phone" type="tel" autocomplete="tel">
                     </div>
                   </div>
 
