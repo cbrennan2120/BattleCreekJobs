@@ -1172,6 +1172,8 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
           <div class="form-actions">
             <button class="button button-primary" type="button" id="open-invite-email">Open Interview Email</button>
             <button class="button button-secondary" type="button" id="copy-invite-message">Copy Interview Message</button>
+            <button class="button button-primary" type="button" id="open-level2-email">Send Level 2 Application E-mail</button>
+            <button class="button button-secondary" type="button" id="copy-level2-message">Copy Application Message</button>
             <button class="button button-secondary" type="button" id="open-decline-email">Open Decline Email</button>
             <button class="button button-secondary" type="button" id="copy-decline-message">Copy Decline Message</button>
           </div>
@@ -1186,6 +1188,8 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
   document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
   document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
+  document.getElementById("open-level2-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildLevel2InviteSubject(candidate), buildLevel2InviteMessage(candidate))));
+  document.getElementById("copy-level2-message")?.addEventListener("click", () => copyTextToClipboard(buildLevel2InviteMessage(candidate)));
   document.getElementById("open-decline-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildDeclineSubject(candidate), buildDeclineMessage(candidate))));
   document.getElementById("copy-decline-message")?.addEventListener("click", () => copyTextToClipboard(buildDeclineMessage(candidate)));
   document.getElementById("save-note")?.addEventListener("click", async () => {
@@ -1250,6 +1254,14 @@ async function deleteCandidate(id, fullName) {
   } catch (error) {
     window.alert(String(error.message || error));
   }
+}
+
+function buildLevel2InviteSubject(candidate) {
+  return renderMessageTemplate(storeConfig.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate, candidate);
+}
+
+function buildLevel2InviteMessage(candidate) {
+  return renderMessageTemplate(storeConfig.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate, candidate);
 }
 
 function buildInviteSubject(candidate) {
