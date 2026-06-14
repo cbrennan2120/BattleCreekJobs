@@ -1293,6 +1293,7 @@ function formatLevel2Data(app) {
   const qMap = {
     zipCode: "Zip Code",
     lastGradeCompleted: "Last grade completed",
+    schoolName: "Name of School",
     hoursPerWeek: "How many hours per week are you hoping to work?",
     schedulingRestrictions: "Are there any scheduling restrictions we should know about?",
     excellentAttendance: "What does excellent attendance mean to you?",
