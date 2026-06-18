@@ -92,7 +92,7 @@ const SHIFTS = [
   { id: "evening", label: "Closing Shift", hours: "5p - 9p" }
 ];
 
-const STAGES = ["new", "sent_full", "interviewing", "interviewed_possible", "awaiting_response", "hold", "declined", "hired"];
+const STAGES = ["new", "sent_full", "interviewing", "interviewed_possible", "awaiting_response", "hold", "declined", "hired", "archived"];
 const STAGE_LABELS = {
   new: "New",
   sent_full: "Sent Full Application",
@@ -101,7 +101,8 @@ const STAGE_LABELS = {
   awaiting_response: "Awaiting Response",
   hold: "Hold",
   declined: "Declined",
-  hired: "Hired"
+  hired: "Hired",
+  archived: "Archived"
 };
 const LEGACY_DEFAULT_ADMIN_CODE = "battlecreek-manager";
 
@@ -234,10 +235,16 @@ function setAdminTab(tabName) {
     button.setAttribute("aria-selected", String(isActive));
   });
   adminTabPanels.forEach((panel) => {
-    const isActive = panel.dataset.adminPanel === tabName;
+    const panelName = panel.dataset.adminPanel;
+    // The applicants and archived tabs share the same list/detail UI
+    const isActive = panelName === tabName || (panelName === "applicants" && tabName === "archived");
     panel.hidden = !isActive;
     panel.classList.toggle("active", isActive);
   });
+
+  if (tabName === "applicants" || tabName === "archived") {
+    renderDashboard();
+  }
 }
 
 function createInitialFormState() {
@@ -1014,7 +1021,21 @@ function renderHealthTabAlert() {
 }
 
 function getFilteredApplicants() {
+  const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
   return applicants.filter((candidate) => {
+    const isExpired = (now - new Date(candidate.submittedAt).getTime()) > SIXTY_DAYS_MS;
+    const isArchivedStage = candidate.stage === "archived";
+
+    if (adminState.activeTab === "archived") {
+      // Archive tab ONLY shows manually archived or 60+ days old
+      if (!isArchivedStage && !isExpired) return false;
+    } else {
+      // Main tab HIDES manually archived or 60+ days old
+      if (isArchivedStage || isExpired) return false;
+    }
+
     const matchesSearch = !managerFilters.search || [
       candidate.fullName,
       candidate.city,
