@@ -92,10 +92,13 @@ const SHIFTS = [
   { id: "evening", label: "Closing Shift", hours: "5p - 9p" }
 ];
 
-const STAGES = ["new", "interview", "hold", "declined", "hired"];
+const STAGES = ["new", "sent_full", "interviewing", "interviewed_possible", "awaiting_response", "hold", "declined", "hired"];
 const STAGE_LABELS = {
   new: "New",
-  interview: "Interviewing",
+  sent_full: "Sent Full Application",
+  interviewing: "Interviewing",
+  interviewed_possible: "Interviewed Possible Future Candidate",
+  awaiting_response: "Awaiting Response",
   hold: "Hold",
   declined: "Declined",
   hired: "Hired"
@@ -1191,7 +1194,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("mark-interviewing")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "interview", lastAction: "mark-interviewing" }));
   document.getElementById("mark-declined")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "declined", lastAction: "mark-declined" }));
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
-  document.getElementById("print-candidate")?.addEventListener("click", () => window.print());
+  document.getElementById("print-candidate")?.addEventListener("click", () => printLevel1Applicant(candidate));
   document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
   document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
   document.getElementById("open-level2-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildLevel2InviteSubject(candidate), buildLevel2InviteMessage(candidate))));
@@ -1399,6 +1402,55 @@ window.printLevel2Applicant = function(appId) {
       </div>
       <div style="font-size: 1.05rem;">
         ${formatLevel2Data(app)}
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(html);
+  printWindow.document.close();
+};
+
+window.printLevel1Applicant = function(candidate) {
+  if (!candidate) return;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Application - ${escapeHtml(candidate.fullName || "Unknown Applicant")}</title>
+      <style>
+        body { font-family: "Segoe UI", sans-serif; line-height: 1.6; color: #333; padding: 2rem; max-width: 800px; margin: 0 auto; }
+        h1 { margin-top: 0; font-size: 1.75rem; border-bottom: 2px solid #00af41; padding-bottom: 0.5rem; }
+        .section { margin-bottom: 1.5rem; page-break-inside: avoid; }
+        .key { font-weight: bold; color: #555; }
+        @media print { body { padding: 0; } }
+      </style>
+    </head>
+    <body onload="window.print()">
+      <h1>${escapeHtml(candidate.fullName || "Unknown Applicant")} - Level 1 Application</h1>
+      <div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #fcf8f0; padding: 1rem; border-radius: 8px;">
+        <div><span class="key">Email:</span> ${escapeHtml(candidate.email || "")}</div>
+        <div><span class="key">Phone:</span> ${escapeHtml(candidate.phone || "")}</div>
+        <div><span class="key">Date Submitted:</span> ${candidate.submittedAt ? new Date(candidate.submittedAt).toLocaleDateString() : ""}</div>
+      </div>
+      <div class="section">
+        <h3>Key Details</h3>
+        <p><span class="key">Hours Wanted:</span> ${escapeHtml(candidate.hoursWanted || "")}</p>
+        <p><span class="key">Start Date:</span> ${escapeHtml(candidate.startDate || "Not provided")}</p>
+        <p><span class="key">Authorized to work:</span> ${candidate.authorized === "yes" ? "Yes" : "Needs review"}</p>
+        <p><span class="key">Candidate Score:</span> ${candidate.score}/100 (${candidate.bucketLabel})</p>
+        <p><span class="key">Availability Fit:</span> ${candidate.availabilityPercent}%</p>
+      </div>
+      <div class="section">
+        <h3>Application Responses</h3>
+        <p><strong>Why do you want to work here?</strong><br>${escapeHtml(candidate.whyWorkHere || "")}</p>
+        <p><strong>Tell us about a time you provided great service.</strong><br>${escapeHtml(candidate.serviceExample || "")}</p>
+      </div>
+      <div class="section">
+        <h3>Manager Notes</h3>
+        <p>${escapeHtml(candidate.managerNote || "No notes saved.")}</p>
       </div>
     </body>
     </html>
