@@ -22,35 +22,59 @@ export function slotStarts(start: Date, end: Date): Date[] {
   return result;
 }
 
+function parseWindow(window: BookingWindow, maximumMinutes: number, kind: "reservation" | "hold") {
+  const start = new Date(window.start);
+  const end = new Date(window.end);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) throw new HttpError(400, "Choose a valid start and end time.");
+  const localStart = local(start);
+  const localEnd = local(end);
+  const milliseconds = end.getTime() - start.getTime();
+  if (milliseconds < SLOT_MINUTES * 60_000 || milliseconds > maximumMinutes * 60_000 || milliseconds % (SLOT_MINUTES * 60_000) !== 0) {
+    const limit = kind === "hold" ? "24 hours" : "four hours";
+    throw new HttpError(400, `${kind === "hold" ? "Holds" : "Reservations"} must use consecutive 30-minute blocks and may last up to ${limit}.`);
+  }
+  if (localStart.toISODate() !== localEnd.minus({ milliseconds: 1 }).toISODate()) throw new HttpError(400, `A ${kind} must start and end on the same store day.`);
+  if (localStart.minute % SLOT_MINUTES !== 0 || localStart.second !== 0 || localEnd.minute % SLOT_MINUTES !== 0 || localEnd.second !== 0) throw new HttpError(400, "Start and end times must fall on a 30-minute boundary.");
+  return { start, end, localStart, localEnd, slots: slotStarts(start, end) };
+}
+
+function requireStoreHours(
+  parsed: ReturnType<typeof parseWindow>,
+  hours: Pick<WeeklyHoursRow, "dayOfWeek" | "opensAt" | "closesAt" | "isClosed">[],
+): void {
+  const dayHours = hours.find((row) => row.dayOfWeek === parsed.localStart.weekday);
+  if (!dayHours || dayHours.isClosed) throw new HttpError(409, "The event space is closed that day.");
+  const opens = DateTime.fromISO(`${parsed.localStart.toISODate()}T${dayHours.opensAt}`, { zone: STORE_TIMEZONE });
+  const closes = DateTime.fromISO(`${parsed.localStart.toISODate()}T${dayHours.closesAt}`, { zone: STORE_TIMEZONE });
+  if (parsed.localStart < opens || parsed.localEnd > closes) throw new HttpError(409, "That time falls outside the available event hours.");
+}
+
 export function validateBookingWindow(
   window: BookingWindow,
   hours: Pick<WeeklyHoursRow, "dayOfWeek" | "opensAt" | "closesAt" | "isClosed">[],
   blackouts: BlackoutLike[],
   now = new Date(),
 ): { start: Date; end: Date; slots: Date[] } {
-  const start = new Date(window.start);
-  const end = new Date(window.end);
-  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) throw new HttpError(400, "Choose a valid start and end time.");
+  const parsed = parseWindow(window, MAX_DURATION_MINUTES, "reservation");
+  if (parsed.start.getTime() < now.getTime() + MIN_NOTICE_HOURS * 3_600_000) throw new HttpError(400, "Reservations require at least 24 hours’ notice.");
+  if (parsed.start.getTime() > now.getTime() + MAX_HORIZON_DAYS * 86_400_000) throw new HttpError(400, "Reservations may be made up to 90 days ahead.");
+  requireStoreHours(parsed, hours);
+  if (blackouts.some((blackout) => parsed.start < blackout.endsAt && parsed.end > blackout.startsAt)) throw new HttpError(409, "That time is unavailable because the store has blocked part of it.");
+  return { start: parsed.start, end: parsed.end, slots: parsed.slots };
+}
 
-  const localStart = local(start);
-  const localEnd = local(end);
-  const minutes = end.getTime() - start.getTime();
-  if (minutes < SLOT_MINUTES * 60_000 || minutes > MAX_DURATION_MINUTES * 60_000 || minutes % (SLOT_MINUTES * 60_000) !== 0) {
-    throw new HttpError(400, "Reservations must use consecutive 30-minute blocks and may last up to four hours.");
-  }
-  if (localStart.toISODate() !== localEnd.minus({ milliseconds: 1 }).toISODate()) throw new HttpError(400, "A reservation must start and end on the same store day.");
-  if (localStart.minute % SLOT_MINUTES !== 0 || localStart.second !== 0 || localEnd.minute % SLOT_MINUTES !== 0 || localEnd.second !== 0) throw new HttpError(400, "Start and end times must fall on a 30-minute boundary.");
-  if (start.getTime() < now.getTime() + MIN_NOTICE_HOURS * 3_600_000) throw new HttpError(400, "Reservations require at least 24 hours’ notice.");
-  if (start.getTime() > now.getTime() + MAX_HORIZON_DAYS * 86_400_000) throw new HttpError(400, "Reservations may be made up to 90 days ahead.");
+export function validateStaffEventWindow(
+  window: BookingWindow,
+  hours: Pick<WeeklyHoursRow, "dayOfWeek" | "opensAt" | "closesAt" | "isClosed">[],
+): { start: Date; end: Date; slots: Date[] } {
+  const parsed = parseWindow(window, MAX_DURATION_MINUTES, "reservation");
+  requireStoreHours(parsed, hours);
+  return { start: parsed.start, end: parsed.end, slots: parsed.slots };
+}
 
-  const dayHours = hours.find((row) => row.dayOfWeek === localStart.weekday);
-  if (!dayHours || dayHours.isClosed) throw new HttpError(409, "The event space is closed that day.");
-  const opens = DateTime.fromISO(`${localStart.toISODate()}T${dayHours.opensAt}`, { zone: STORE_TIMEZONE });
-  const closes = DateTime.fromISO(`${localStart.toISODate()}T${dayHours.closesAt}`, { zone: STORE_TIMEZONE });
-  if (localStart < opens || localEnd > closes) throw new HttpError(409, "That time falls outside the available event hours.");
-  if (blackouts.some((blackout) => start < blackout.endsAt && end > blackout.startsAt)) throw new HttpError(409, "That time is unavailable because the store has blocked part of it.");
-
-  return { start, end, slots: slotStarts(start, end) };
+export function validateStaffHoldWindow(window: BookingWindow): { start: Date; end: Date } {
+  const parsed = parseWindow(window, 1440, "hold");
+  return { start: parsed.start, end: parsed.end };
 }
 
 export interface PublicSlot {

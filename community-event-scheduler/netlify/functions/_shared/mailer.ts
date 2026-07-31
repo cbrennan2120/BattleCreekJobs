@@ -32,3 +32,18 @@ export async function sendConfirmation(input: { email: string; groupName: string
 export async function sendChanged(email: string, groupName: string, message: string): Promise<void> {
   await send(email, `PSP event update: ${groupName}`, `<div style="font-family:Arial,sans-serif;max-width:600px"><h1 style="color:#00af41">Reservation updated</h1><p>${escape(message)}</p><p>Pet Supplies Plus Battle Creek</p></div>`);
 }
+
+export async function sendManualEntrySummary(input: {
+  email: string;
+  groupName: string;
+  action: "created" | "updated" | "cancelled";
+  dates: string[];
+  skipped?: number;
+}): Promise<void> {
+  const labels = { created: "scheduled", updated: "updated", cancelled: "cancelled" } as const;
+  const dateList = input.dates.length
+    ? `<ul>${input.dates.map((date) => `<li>${escape(date)}</li>`).join("")}</ul>`
+    : "<p>No remaining dates.</p>";
+  const skipped = input.skipped ? `<p>${input.skipped} conflicting date${input.skipped === 1 ? " was" : "s were"} skipped and not changed.</p>` : "";
+  await send(input.email, `PSP staff event ${labels[input.action]}: ${input.groupName}`, `<div style="font-family:Arial,sans-serif;max-width:600px"><h1 style="color:#00af41">Event ${labels[input.action]}</h1><p>Store staff ${labels[input.action]} <strong>${escape(input.groupName)}</strong> for:</p>${dateList}${skipped}<p>This entry was created by store staff, so changes are handled by Pet Supplies Plus Battle Creek.</p></div>`);
+}

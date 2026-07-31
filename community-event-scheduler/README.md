@@ -11,6 +11,8 @@ Public scheduling for the shared community event space at Pet Supplies Plus Batt
 - Ten-minute atomic holds with six-digit email verification
 - Private cancellation/rescheduling links
 - Shared-passcode staff dashboard with full contact details, hours, blackouts, and audit history
+- Four-step staff workflow for one-time or recurring public events and private store holds
+- Daily, interval-weekly, multi-weekday, day-of-month, and ordinal-weekday recurrence with occurrence/following/series management
 - Turnstile, database-backed rate limits, secure cookies, CSRF checks, hashed tokens, and explicit public response projections
 - Netlify Database migrations and a five-minute expired-hold cleanup function
 
@@ -72,7 +74,7 @@ The owner management route requires a random private token. Every staff data rou
 npm.cmd run check
 ```
 
-The suite covers slot boundaries, hours, duration, notice/horizon rules, blackouts, daylight-saving dates, pending-booking privacy, public contact-data redaction, logo dimensions, and the database uniqueness constraint that prevents two bookings from claiming the same resource/time slot.
+The suite covers slot boundaries, hours, duration, notice/horizon rules, blackouts, recurrence limits and patterns, daylight-saving dates, pending-booking privacy, public contact-data redaction, logo dimensions, and the database uniqueness constraint that prevents events and holds from claiming the same resource/time slot.
 
 Before production activation:
 

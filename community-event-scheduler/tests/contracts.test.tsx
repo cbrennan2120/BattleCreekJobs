@@ -14,6 +14,23 @@ describe("database concurrency contract", () => {
     const sql = readFileSync(join(migrationRoot, directory, "migration.sql"), "utf8");
     expect(sql).toContain('CREATE UNIQUE INDEX "booking_slots_resource_start_unique" ON "booking_slots" ("resource_id","slot_start")');
   });
+
+  it("adds recurrence metadata and lets holds use the same unique slot claims", () => {
+    const migration = readFileSync(join(process.cwd(), "netlify", "database", "migrations", "20260731210000_manual-recurring-entries", "migration.sql"), "utf8");
+    expect(migration).toContain('CREATE TABLE "recurrence_series"');
+    expect(migration).toContain('ADD COLUMN "source" text DEFAULT \'public\' NOT NULL');
+    expect(migration).toContain('ADD COLUMN "blackout_id" uuid');
+    const schema = readFileSync(join(process.cwd(), "db", "schema.ts"), "utf8");
+    expect(schema).toContain('uniqueIndex("booking_slots_resource_start_unique")');
+  });
+});
+
+describe("public privacy contract", () => {
+  it("keeps private manual-entry fields out of public availability types", () => {
+    const scheduling = readFileSync(join(process.cwd(), "netlify", "functions", "_shared", "scheduling.ts"), "utf8");
+    const publicInterface = scheduling.slice(scheduling.indexOf("export interface PublicSlot"), scheduling.indexOf("export function generateAvailability"));
+    expect(publicInterface).not.toMatch(/contactName|email|phone|privateNotes|reason|seriesId|manageToken/);
+  });
 });
 
 describe("public shell", () => {

@@ -49,6 +49,7 @@ export default async (request: Request) => {
     const manageUrl = `${baseUrl}/manage/${encodeURIComponent(finalToken)}`;
     const start = DateTime.fromJSDate(booking.startsAt).setZone(STORE_TIMEZONE);
     const end = DateTime.fromJSDate(booking.endsAt).setZone(STORE_TIMEZONE);
+    if (!booking.email) throw new HttpError(500, "The booking email is missing.");
     await sendConfirmation({
       email: booking.email,
       groupName: booking.groupName,

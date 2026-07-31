@@ -36,10 +36,51 @@ export interface BookingStartInput {
   turnstileToken?: string;
 }
 
-export interface AdminBooking extends BookingStartInput {
+export interface AdminBooking {
   id: string;
+  groupName: string;
+  category: Category;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  privateNotes?: string;
+  start: string;
+  end: string;
   status: "pending_verification" | "confirmed" | "cancelled" | "expired";
   createdAt: string;
   confirmedAt?: string | null;
   expiresAt?: string | null;
+  source: "public" | "admin_manual";
+  seriesId?: string | null;
+  occurrenceKey?: string | null;
+  isException: boolean;
+}
+
+export type RecurrenceEnd = { type: "until"; date: string } | { type: "count"; count: number };
+export type RecurrenceRule =
+  | { frequency: "none" }
+  | { frequency: "daily"; interval: number; end: RecurrenceEnd }
+  | { frequency: "weekly"; interval: number; weekdays: number[]; end: RecurrenceEnd }
+  | { frequency: "monthly"; interval: number; mode: "day_of_month"; dayOfMonth: number; end: RecurrenceEnd }
+  | { frequency: "monthly"; interval: number; mode: "ordinal_weekday"; ordinal: -1 | 1 | 2 | 3 | 4 | 5; weekday: number; end: RecurrenceEnd };
+
+export type ManualEntryDraft = {
+  startDate: string;
+  startTime: string;
+  durationMinutes: number;
+  recurrence: RecurrenceRule;
+} & (
+  | { entryType: "event"; event: { groupName: string; category: Category; contactName?: string; email?: string; phone?: string; privateNotes?: string } }
+  | { entryType: "hold"; hold: { reason: string } }
+);
+
+export interface ManualOccurrence {
+  id?: string;
+  occurrenceKey: string;
+  date: string;
+  time: string;
+  start?: string;
+  end?: string;
+  status?: "open" | "conflict" | "skipped";
+  reason?: string;
 }
