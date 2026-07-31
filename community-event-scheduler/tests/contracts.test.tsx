@@ -8,7 +8,9 @@ import { fromStoreLocalInput } from "../src/date";
 describe("database concurrency contract", () => {
   it("enforces one resource claim per 30-minute start", () => {
     const migrationRoot = join(process.cwd(), "netlify", "database", "migrations");
-    const directory = readdirSync(migrationRoot)[0];
+    const directory = readdirSync(migrationRoot, { withFileTypes: true })
+      .find((entry) => entry.isDirectory() && /^\d+_[a-z0-9_-]+$/.test(entry.name))?.name;
+    if (!directory) throw new Error("Expected a Netlify migration directory named <number>_<slug>.");
     const sql = readFileSync(join(migrationRoot, directory, "migration.sql"), "utf8");
     expect(sql).toContain('CREATE UNIQUE INDEX "booking_slots_resource_start_unique" ON "booking_slots" ("resource_id","slot_start")');
   });
