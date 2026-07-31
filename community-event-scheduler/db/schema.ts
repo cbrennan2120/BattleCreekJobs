@@ -17,24 +17,47 @@ export const weeklyHours = pgTable("weekly_hours", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex("weekly_hours_day_unique").on(table.dayOfWeek)]);
 
+export const recurrenceSeries = pgTable("recurrence_series", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  entryType: text("entry_type").notNull(),
+  timezone: text("timezone").notNull().default("America/Detroit"),
+  localStartTime: text("local_start_time").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  recurrenceRule: jsonb("recurrence_rule").notNull(),
+  details: jsonb("details").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt,
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("recurrence_series_status_idx").on(table.status)]);
+
 export const blackoutPeriods = pgTable("blackout_periods", {
   id: uuid("id").primaryKey().defaultRandom(),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   reason: text("reason").notNull(),
+  seriesId: uuid("series_id").references(() => recurrenceSeries.id),
+  occurrenceKey: text("occurrence_key"),
+  isException: boolean("is_exception").notNull().default(false),
   createdAt,
-}, (table) => [index("blackout_periods_range_idx").on(table.startsAt, table.endsAt)]);
+}, (table) => [
+  index("blackout_periods_range_idx").on(table.startsAt, table.endsAt),
+  uniqueIndex("blackout_series_occurrence_unique").on(table.seriesId, table.occurrenceKey),
+]);
 
 export const bookings = pgTable("bookings", {
   id: uuid("id").primaryKey().defaultRandom(),
   resourceId: text("resource_id").notNull().default("battle-creek-event-space"),
   groupName: text("group_name").notNull(),
   category: text("category").notNull(),
-  contactName: text("contact_name").notNull(),
-  email: text("email").notNull(),
+  contactName: text("contact_name"),
+  email: text("email"),
   phone: text("phone"),
   privateNotes: text("private_notes"),
   status: text("status").notNull().default("pending_verification"),
+  source: text("source").notNull().default("public"),
+  seriesId: uuid("series_id").references(() => recurrenceSeries.id),
+  occurrenceKey: text("occurrence_key"),
+  isException: boolean("is_exception").notNull().default(false),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   manageTokenHash: text("manage_token_hash").notNull().unique(),
@@ -47,17 +70,20 @@ export const bookings = pgTable("bookings", {
   index("bookings_range_idx").on(table.startsAt, table.endsAt),
   index("bookings_status_idx").on(table.status),
   index("bookings_email_idx").on(table.email),
+  uniqueIndex("bookings_series_occurrence_unique").on(table.seriesId, table.occurrenceKey),
 ]);
 
 export const bookingSlots = pgTable("booking_slots", {
   id: uuid("id").primaryKey().defaultRandom(),
-  bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+  bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
+  blackoutId: uuid("blackout_id").references(() => blackoutPeriods.id, { onDelete: "cascade" }),
   resourceId: text("resource_id").notNull(),
   slotStart: timestamp("slot_start", { withTimezone: true }).notNull(),
   createdAt,
 }, (table) => [
   uniqueIndex("booking_slots_resource_start_unique").on(table.resourceId, table.slotStart),
   index("booking_slots_booking_idx").on(table.bookingId),
+  index("booking_slots_blackout_idx").on(table.blackoutId),
 ]);
 
 export const verificationChallenges = pgTable("verification_challenges", {

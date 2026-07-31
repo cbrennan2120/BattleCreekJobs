@@ -43,7 +43,7 @@ export default async (request: Request, context: Context) => {
         await tx.update(bookings).set({ status: "cancelled", cancelledAt: now, updatedAt: now }).where(eq(bookings.id, booking.id));
         await tx.insert(auditLog).values({ actorType: "booker", action: "booking_cancelled", entityType: "booking", entityId: booking.id });
       });
-      await sendChanged(booking.email, booking.groupName, "Your reservation was cancelled and the time is available again.").catch(console.error);
+      if (booking.email) await sendChanged(booking.email, booking.groupName, "Your reservation was cancelled and the time is available again.").catch(console.error);
       return json(ownerView({ ...booking, status: "cancelled", cancelledAt: now, updatedAt: now }));
     }
 
@@ -67,7 +67,7 @@ export default async (request: Request, context: Context) => {
     }
     const startLabel = DateTime.fromJSDate(window.start).setZone(STORE_TIMEZONE).toFormat("cccc, LLLL d 'at' h:mm a");
     const endLabel = DateTime.fromJSDate(window.end).setZone(STORE_TIMEZONE).toFormat("h:mm a");
-    await sendChanged(booking.email, booking.groupName, `Your reservation was moved to ${startLabel}–${endLabel}.`).catch(console.error);
+    if (booking.email) await sendChanged(booking.email, booking.groupName, `Your reservation was moved to ${startLabel}–${endLabel}.`).catch(console.error);
     return json(ownerView({ ...booking, startsAt: window.start, endsAt: window.end, updatedAt: now }));
   } catch (error) { return handleError(error); }
 };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DateTime } from "luxon";
 import type { BookingRow, WeeklyHoursRow } from "../db/schema";
-import { generateAvailability, slotStarts, validateBookingWindow } from "../netlify/functions/_shared/scheduling";
+import { generateAvailability, slotStarts, validateBookingWindow, validateStaffEventWindow, validateStaffHoldWindow } from "../netlify/functions/_shared/scheduling";
 
 const hours = Array.from({ length: 7 }, (_, index) => ({
   id: crypto.randomUUID(),
@@ -23,6 +23,10 @@ function booking(overrides: Partial<BookingRow> = {}): BookingRow {
     phone: "269-555-0100",
     privateNotes: "Never public",
     status: "confirmed",
+    source: "public",
+    seriesId: null,
+    occurrenceKey: null,
+    isException: false,
     startsAt: new Date("2026-08-10T17:00:00.000Z"),
     endsAt: new Date("2026-08-10T18:00:00.000Z"),
     manageTokenHash: "secret",
@@ -63,6 +67,18 @@ describe("slot policy", () => {
       [{ startsAt: new Date("2026-08-10T14:00:00.000Z"), endsAt: new Date("2026-08-10T14:30:00.000Z") }],
       now,
     )).toThrow(/blocked/);
+  });
+
+  it("lets staff schedule an immediate event but still enforces hours and four hours", () => {
+    expect(validateStaffEventWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T13:30:00.000Z" }, hours).slots).toHaveLength(1);
+    expect(() => validateStaffEventWindow({ start: "2026-08-10T12:30:00.000Z", end: "2026-08-10T13:00:00.000Z" }, hours)).toThrow(/outside/);
+    expect(() => validateStaffEventWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T17:30:00.000Z" }, hours)).toThrow(/four hours/);
+  });
+
+  it("allows same-day 30-minute store holds up to 24 hours", () => {
+    expect(validateStaffHoldWindow({ start: "2026-08-10T04:00:00.000Z", end: "2026-08-11T04:00:00.000Z" })).toBeTruthy();
+    expect(() => validateStaffHoldWindow({ start: "2026-08-10T04:15:00.000Z", end: "2026-08-10T05:15:00.000Z" })).toThrow(/30-minute/);
+    expect(() => validateStaffHoldWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-11T13:30:00.000Z" })).toThrow(/24 hours/);
   });
 });
 

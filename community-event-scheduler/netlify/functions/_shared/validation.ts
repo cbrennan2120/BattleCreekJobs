@@ -51,3 +51,64 @@ export const blackoutSchema = z.object({
   endsAt: z.string().datetime({ offset: true }),
   reason: z.string().trim().min(2).max(200),
 });
+
+const recurrenceEndSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("until"), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+  z.object({ type: z.literal("count"), count: z.number().int().min(1).max(200) }),
+]);
+
+export const recurrenceRuleSchema = z.discriminatedUnion("frequency", [
+  z.object({ frequency: z.literal("none") }),
+  z.object({ frequency: z.literal("daily"), interval: z.number().int().min(1).max(30), end: recurrenceEndSchema }),
+  z.object({
+    frequency: z.literal("weekly"),
+    interval: z.number().int().min(1).max(12),
+    weekdays: z.array(z.number().int().min(1).max(7)).min(1).max(7).transform((days) => Array.from(new Set(days))),
+    end: recurrenceEndSchema,
+  }),
+  z.object({
+    frequency: z.literal("monthly"),
+    interval: z.number().int().min(1).max(12),
+    mode: z.literal("day_of_month"),
+    dayOfMonth: z.number().int().min(1).max(31),
+    end: recurrenceEndSchema,
+  }),
+  z.object({
+    frequency: z.literal("monthly"),
+    interval: z.number().int().min(1).max(12),
+    mode: z.literal("ordinal_weekday"),
+    ordinal: z.union([z.literal(-1), z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+    weekday: z.number().int().min(1).max(7),
+    end: recurrenceEndSchema,
+  }),
+]);
+
+const eventDetailsSchema = z.object({
+  groupName: z.string().trim().min(2).max(100),
+  category: z.enum(CATEGORY_VALUES),
+  contactName: z.string().trim().max(100).optional().transform((value) => value || undefined),
+  email: z.string().trim().email().max(254).optional().transform((value) => value?.toLowerCase() || undefined),
+  phone: z.string().trim().max(30).optional().transform((value) => value || undefined),
+  privateNotes: z.string().trim().max(1000).optional().transform((value) => value || undefined),
+});
+
+const manualScheduleSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
+  durationMinutes: z.number().int().min(30).max(1440).refine((value) => value % 30 === 0, "Duration must use 30-minute blocks."),
+  recurrence: recurrenceRuleSchema,
+});
+
+export const manualEntrySchema = z.discriminatedUnion("entryType", [
+  manualScheduleSchema.extend({ entryType: z.literal("event"), event: eventDetailsSchema }),
+  manualScheduleSchema.extend({ entryType: z.literal("hold"), hold: z.object({ reason: z.string().trim().min(2).max(200) }) }),
+]).superRefine((entry, context) => {
+  if (entry.entryType === "event" && entry.durationMinutes > 240) {
+    context.addIssue({ code: "custom", path: ["durationMinutes"], message: "Events may last up to four hours." });
+  }
+});
+
+export const manualEntryUpdateSchema = z.object({
+  scope: z.enum(["occurrence", "following", "series"]),
+  draft: manualEntrySchema,
+});
