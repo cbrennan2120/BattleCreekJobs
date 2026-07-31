@@ -19,6 +19,14 @@ Live:
 
 - `https://battlecreekjobs.app`
 
+### `community-event-scheduler/`
+Pet Supplies Plus Battle Creek public community-event scheduler and private staff dashboard.
+
+- 30-minute public availability and email-verified reservations
+- Admin-only contact information, weekly hours, blackouts, and audit history
+- React/Vite, Netlify Functions, and Netlify Database/Postgres
+- Production URL will be assigned after the deploy preview is approved
+
 ## Repo notes
 
 - Secrets stay local and must not be committed

@@ -1,0 +1,39 @@
+{
+  "name": "psp-battle-creek-community-event-scheduler",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "check": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "@marsidev/react-turnstile": "latest",
+    "@netlify/database": "latest",
+    "@netlify/functions": "latest",
+    "bcryptjs": "latest",
+    "drizzle-orm": "beta",
+    "luxon": "latest",
+    "postgres": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "resend": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/luxon": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@netlify/vite-plugin": "latest",
+    "@vitejs/plugin-react": "latest",
+    "drizzle-kit": "beta",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}
