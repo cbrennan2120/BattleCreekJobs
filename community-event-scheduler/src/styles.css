@@ -162,6 +162,10 @@ dd { margin: 0; line-height: 1.45; }
 .status-pill.confirmed { background: #bdf4d1; color: #004f1d; }
 .status-pill.cancelled, .status-pill.expired { background: #eee; color: #555; }
 .reschedule-form { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+.manage-details-form { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+.manage-details-form h3, .manage-details-form .form-intro { margin: 0; }
+.manage-details-form input[readonly] { background: var(--light-gray); color: var(--muted); cursor: not-allowed; }
+.field-help { display: block; margin-top: .35rem; color: var(--muted); font-size: .88rem; line-height: 1.4; }
 .danger-zone { margin-top: 2rem; padding: 1.25rem; border: 2px solid var(--red); border-radius: 12px; }
 
 .admin-page { max-width: 1280px; }

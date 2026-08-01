@@ -60,13 +60,36 @@ test("booking dialog uses explicit date and hour controls and restores focus", a
   await expect(opener).toBeFocused();
 });
 
-test("manage page uses hourly controls and an accessible cancellation dialog", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "chromium-desktop", "representative workflow test");
-  await page.route("**/api/manage/test-token", (route) => route.fulfill({ json: { groupName: "Tomorrow's Tails", category: "Rescue Organization", contactName: "Test User", email: "test@example.com", status: "confirmed", start: "2026-08-08T18:00:00.000Z", end: "2026-08-08T21:00:00.000Z" } }));
+test("manage page edits details without changing the schedule and supports cancellation", async ({ page }, testInfo) => {
+  test.skip(!["chromium-desktop", "chromium-mobile"].includes(testInfo.project.name), "representative desktop and mobile workflow test");
+  const original = { groupName: "Tomorrow's Tails", category: "Rescue Organization", contactName: "Test User", email: "test@example.com", phone: "269-555-0100", privateNotes: "Original note", status: "confirmed", start: "2026-08-08T18:00:00.000Z", end: "2026-08-08T21:00:00.000Z" };
+  let submitted: Record<string, unknown> | undefined;
+  await page.route("**/api/manage/test-token", async (route) => {
+    if (route.request().method() === "GET") return route.fulfill({ json: original });
+    submitted = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({ json: { ...original, groupName: submitted.groupName, category: submitted.category, contactName: submitted.contactName, phone: submitted.phone, privateNotes: submitted.privateNotes } });
+  });
   await page.goto("/manage/test-token", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Manage your event" })).toBeVisible();
   await expect(page.locator('input[type="datetime-local"]')).toHaveCount(0);
   await expect(page.getByLabel("Start time")).toHaveValue("14:00");
+  await expect(page.getByLabel("Verified email")).toHaveValue("test@example.com");
+  await expect(page.getByLabel("Verified email")).toHaveAttribute("readonly", "");
+  await page.getByLabel("Group or event name").fill("Updated Adoption Event");
+  await page.getByLabel("Event category").selectOption("Community Event");
+  await page.getByLabel("Contact name").fill("Updated Contact");
+  await page.getByLabel("Phone (optional)").fill("");
+  await page.getByLabel("Notes for store staff (optional and private)").fill("Updated note");
+  await page.getByRole("button", { name: "Save reservation details" }).click();
+  await expect(page.getByRole("status")).toContainText("reservation details have been updated");
+  expect(submitted).toEqual({ action: "update_details", groupName: "Updated Adoption Event", category: "Community Event", contactName: "Updated Contact", privateNotes: "Updated note" });
+  expect(submitted).not.toHaveProperty("email");
+  expect(submitted).not.toHaveProperty("start");
+  expect(submitted).not.toHaveProperty("end");
+  await expect(page.getByLabel("Start time")).toHaveValue("14:00");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
   const cancel = page.getByRole("button", { name: "Cancel reservation" });
   await cancel.click();
   await expect(page.getByRole("dialog", { name: "Cancel this reservation?" })).toBeVisible();
