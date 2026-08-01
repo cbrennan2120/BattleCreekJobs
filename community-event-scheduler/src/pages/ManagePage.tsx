@@ -1,6 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, ApiError } from "../api";
 import { addHoursToStoreInput, bookingInputBounds, formatDay, formatTime, fromStoreLocalInput, hoursBetween, toLocalInput } from "../date";
+import AccessibleDialog from "../components/AccessibleDialog";
+import { DateHourFields } from "../components/HourFields";
+import FormError from "../components/FormError";
 
 interface ManagedBooking {
   groupName: string;
@@ -21,6 +24,7 @@ export default function ManagePage({ token }: { token: string }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const bounds = bookingInputBounds();
 
   const load = async () => {
@@ -64,8 +68,8 @@ export default function ManagePage({ token }: { token: string }) {
       <a className="back-link" href="/">← Back to the public schedule</a>
       <p className="eyebrow">Private reservation link</p>
       <h1>Manage your event</h1>
-      {!booking && !error && <div className="state-card">Loading your reservation…</div>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {!booking && !error && <div className="state-card" role="status" aria-live="polite">Loading your reservation…</div>}
+      {error && <FormError>{error}</FormError>}
       {notice && <p className="success-notice" role="status">{notice}</p>}
       {booking && (
         <div className="manage-card">
@@ -81,8 +85,7 @@ export default function ManagePage({ token }: { token: string }) {
             <>
               <form className="reschedule-form" onSubmit={(event) => void act("reschedule", event)}>
                 <h3>Choose another time</h3>
-                <label htmlFor="manage-start">Starts</label>
-                <input id="manage-start" type="datetime-local" step="3600" min={bounds.min} max={bounds.max} value={start} onChange={(e) => setStart(e.target.value)} required />
+                <DateHourFields idPrefix="manage-start" value={start} min={bounds.min} max={bounds.max} onChange={setStart} />
                 <label htmlFor="manage-duration">Length</label>
                 <select id="manage-duration" value={durationHours} onChange={(e) => setDurationHours(Number(e.target.value))}>{[1, 2, 3, 4].map((hours) => <option key={hours} value={hours}>{hours} hour{hours === 1 ? "" : "s"}</option>)}</select>
                 <button className="button primary" disabled={busy}>{busy ? "Saving…" : "Move reservation"}</button>
@@ -90,12 +93,19 @@ export default function ManagePage({ token }: { token: string }) {
               <div className="danger-zone">
                 <h3>Need to cancel?</h3>
                 <p>The time will immediately become available to another neighbor.</p>
-                <button className="button danger" disabled={busy} onClick={() => { if (window.confirm("Cancel this reservation?")) void act("cancel"); }}>Cancel reservation</button>
+                <button className="button danger" disabled={busy} onClick={() => setConfirmCancel(true)}>Cancel reservation</button>
               </div>
             </>
           )}
         </div>
       )}
+      {confirmCancel && <AccessibleDialog className="scope-dialog" labelledBy="cancel-title" onClose={() => setConfirmCancel(false)} initialFocusSelector=".dialog-actions .ghost">
+        <button className="dialog-close" onClick={() => setConfirmCancel(false)} aria-label="Close">×</button>
+        <p className="eyebrow">Reservation change</p>
+        <h2 id="cancel-title">Cancel this reservation?</h2>
+        <p>The reserved time will immediately become available to another neighbor.</p>
+        <div className="dialog-actions"><button className="button ghost" onClick={() => setConfirmCancel(false)}>Keep reservation</button><button className="button danger" disabled={busy} onClick={() => { setConfirmCancel(false); void act("cancel"); }}>Cancel reservation</button></div>
+      </AccessibleDialog>}
     </section>
   );
 }

@@ -1,4 +1,22 @@
 export const STORE_TIMEZONE = "America/Detroit";
+export const HOUR_VALUES = Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, "0")}:00` as const);
+
+export type HourValue = (typeof HOUR_VALUES)[number];
+
+export function formatHourValue(value: string): string {
+  const hour = Number(value.slice(0, 2));
+  const display = hour % 12 || 12;
+  return `${display}:00 ${hour < 12 ? "AM" : "PM"}`;
+}
+
+export function splitStoreLocalInput(value: string): { date: string; hour: string } {
+  const [date = "", time = ""] = value.split("T");
+  return { date, hour: /^\d{2}:00$/.test(time) ? time : "09:00" };
+}
+
+export function combineStoreLocalInput(date: string, hour: string): string {
+  return date && /^\d{2}:00$/.test(hour) ? `${date}T${hour}` : "";
+}
 
 export function isoDate(date: Date): string {
   const year = date.getFullYear();

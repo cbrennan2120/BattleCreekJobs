@@ -1,9 +1,11 @@
 import { FormEvent, useMemo, useRef, useState } from "react";
-import { Turnstile } from "@marsidev/react-turnstile";
-import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { api, ApiError } from "../api";
 import { CATEGORIES, type BookingStartInput, type Category } from "../types";
 import { addHoursToStoreInput, bookingInputBounds, fromStoreLocalInput, toLocalInput } from "../date";
+import AccessibleDialog from "./AccessibleDialog";
+import CaptchaChallenge, { type CaptchaChallengeHandle } from "./CaptchaChallenge";
+import { DateHourFields } from "./HourFields";
+import FormError from "./FormError";
 
 interface Props {
   initialStart?: string;
@@ -47,7 +49,7 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
   const [durationHours, setDurationHours] = useState(1);
   const bounds = useMemo(() => bookingInputBounds(), []);
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-  const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const captchaRef = useRef<CaptchaChallengeHandle | null>(null);
 
   const update = (key: keyof BookingStartInput, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -76,7 +78,7 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
       setError(caught instanceof ApiError ? caught.message : "We could not hold that time.");
       if (siteKey) {
         update("turnstileToken", "");
-        turnstileRef.current?.reset();
+        captchaRef.current?.reset("The request was not accepted. Complete a fresh spam-protection check and try again.");
       }
     } finally {
       setBusy(false);
@@ -104,35 +106,35 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
 
   if (confirmed) {
     return (
-      <div className="dialog-card confirmation" role="dialog" aria-modal="true" aria-labelledby="confirmed-title">
+      <AccessibleDialog className="confirmation" labelledBy="confirmed-title" onClose={onClose} initialFocusSelector="a.button">
         <button className="dialog-close" onClick={onClose} aria-label="Close">×</button>
         <span className="success-mark" aria-hidden="true">✓</span>
         <h2 id="confirmed-title">You’re booked!</h2>
         <p>We sent the details to your email. Keep your private link if you need to cancel or choose another time.</p>
         <a className="button primary" href={confirmed.manageUrl}>Manage this reservation</a>
-      </div>
+      </AccessibleDialog>
     );
   }
 
   if (challenge) {
     return (
-      <div className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="verify-title">
+      <AccessibleDialog labelledBy="verify-title" onClose={onClose} initialFocusSelector="#verification-code">
         <button className="dialog-close" onClick={onClose} aria-label="Close">×</button>
         <p className="eyebrow">One quick step</p>
         <h2 id="verify-title">Check your email</h2>
         <p>Enter the six-digit code sent to <strong>{form.email}</strong>. Your time is held for ten minutes.</p>
         <form onSubmit={verify}>
           <label htmlFor="verification-code">Verification code</label>
-          <input id="verification-code" className="code-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} required autoFocus />
-          {error && <p className="form-error" role="alert">{error}</p>}
+          <input id="verification-code" className="code-input" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} required />
+          {error && <FormError>{error}</FormError>}
           <button className="button primary full" disabled={busy || code.length !== 6}>{busy ? "Checking…" : "Confirm reservation"}</button>
         </form>
-      </div>
+      </AccessibleDialog>
     );
   }
 
   return (
-    <div className="dialog-card booking-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+    <AccessibleDialog className="booking-dialog" labelledBy="booking-title" onClose={onClose} initialFocusSelector="#group-name">
       <button className="dialog-close" onClick={onClose} aria-label="Close">×</button>
       <p className="eyebrow">Reserve the space</p>
       <h2 id="booking-title">Tell us about your event</h2>
@@ -140,7 +142,7 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
       <form onSubmit={submit} className="booking-form">
         <div className="field-span">
           <label htmlFor="group-name">Group or event name</label>
-          <input id="group-name" value={form.groupName} onChange={(e) => update("groupName", e.target.value)} maxLength={100} required autoFocus />
+          <input id="group-name" value={form.groupName} onChange={(e) => update("groupName", e.target.value)} maxLength={100} required />
         </div>
         <div className="field-span">
           <label htmlFor="category">Event category</label>
@@ -148,10 +150,7 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
             {CATEGORIES.map((category) => <option key={category}>{category}</option>)}
           </select>
         </div>
-        <div>
-          <label htmlFor="start">Starts</label>
-          <input id="start" type="datetime-local" step="3600" min={bounds.min} max={bounds.max} value={form.start} onChange={(e) => update("start", e.target.value)} required />
-        </div>
+        <DateHourFields idPrefix="booking-start" value={form.start} min={bounds.min} max={bounds.max} onChange={(value) => update("start", value)} />
         <div>
           <label htmlFor="duration">Length</label>
           <select id="duration" value={durationHours} onChange={(e) => setDurationHours(Number(e.target.value))}>
@@ -174,32 +173,13 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
           <label htmlFor="notes">Notes for store staff <span>(optional and private)</span></label>
           <textarea id="notes" value={form.privateNotes} onChange={(e) => update("privateNotes", e.target.value)} maxLength={1000} rows={3} />
         </div>
-        {siteKey && (
-          <div className="field-span turnstile-wrap">
-            <Turnstile
-              ref={turnstileRef}
-              siteKey={siteKey}
-              onSuccess={(token) => { update("turnstileToken", token); setError(""); }}
-              onExpire={() => {
-                update("turnstileToken", "");
-                setError("The spam-protection check expired and is refreshing. Please try again.");
-                turnstileRef.current?.reset();
-              }}
-              onError={() => {
-                update("turnstileToken", "");
-                setError("The spam-protection check could not finish. It is refreshing now.");
-                turnstileRef.current?.reset();
-              }}
-              options={{ theme: "light", refreshExpired: "manual" }}
-            />
-          </div>
-        )}
-        {error && <p className="form-error field-span" role="alert">{error}</p>}
+        {siteKey && <div className="field-span"><CaptchaChallenge ref={captchaRef} siteKey={siteKey} onTokenChange={(token) => { update("turnstileToken", token); if (token) setError(""); }} /></div>}
+        {error && <FormError className="field-span">{error}</FormError>}
         <div className="dialog-actions field-span">
           <button type="button" className="button ghost" onClick={onClose}>Not yet</button>
           <button className="button primary" disabled={busy || Boolean(siteKey && !form.turnstileToken)}>{busy ? "Holding your time…" : "Email my verification code"}</button>
         </div>
       </form>
-    </div>
+    </AccessibleDialog>
   );
 }
