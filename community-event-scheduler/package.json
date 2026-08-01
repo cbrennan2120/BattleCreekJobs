@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "test": "vitest run",
+    "test:ui": "playwright test",
+    "test:ui:update": "playwright test --update-snapshots",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build",
+    "check:full": "npm run check && npm run test:ui"
   },
   "dependencies": {
     "@marsidev/react-turnstile": "latest",
@@ -25,13 +29,19 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@netlify/vite-plugin": "latest",
+    "@playwright/test": "^1.62.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/luxon": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@netlify/vite-plugin": "latest",
     "@vitejs/plugin-react": "latest",
     "drizzle-kit": "beta",
+    "jsdom": "^29.1.1",
     "typescript": "latest",
     "vite": "latest",
     "vitest": "latest"

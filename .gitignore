@@ -13,3 +13,5 @@ Thumbs.db
 temp-*.html
 live-audit-*.png
 review-*.png
+community-event-scheduler/test-results/
+community-event-scheduler/playwright-report/

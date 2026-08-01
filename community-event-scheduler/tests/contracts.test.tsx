@@ -71,11 +71,12 @@ describe("public shell", () => {
 
   it("requires a fresh Turnstile token and resets consumed or expired challenges", () => {
     const bookingForm = readFileSync(join(process.cwd(), "src", "components", "BookingForm.tsx"), "utf8");
-    expect(bookingForm).toContain("useRef<TurnstileInstance | null>(null)");
+    const captcha = readFileSync(join(process.cwd(), "src", "components", "CaptchaChallenge.tsx"), "utf8");
+    expect(bookingForm).toContain("useRef<CaptchaChallengeHandle | null>(null)");
     expect(bookingForm).toContain("if (siteKey && !form.turnstileToken)");
-    expect(bookingForm).toContain("turnstileRef.current?.reset()");
-    expect(bookingForm).toContain("onExpire={() => {");
-    expect(bookingForm).toContain("onError={() => {");
+    expect(bookingForm).toContain("captchaRef.current?.reset(");
+    expect(captcha).toContain("onExpire={() => reset(");
+    expect(captcha).toContain('setMessage("The spam-protection check could not finish. Use Retry');
     expect(bookingForm).toContain("busy || Boolean(siteKey && !form.turnstileToken)");
   });
 });

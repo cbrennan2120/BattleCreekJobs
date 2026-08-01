@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "../api";
 import BookingForm from "../components/BookingForm";
+import AccessibleTabs from "../components/AccessibleTabs";
 import { CATEGORIES, type AvailabilityResponse, type Category, type PublicSlot } from "../types";
 import { dateKey, formatDay, formatTime, moveWeek, startOfWeek } from "../date";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const categoryClass: Record<Category, string> = {
   "Rescue Organization": "rescue",
@@ -15,7 +17,7 @@ const categoryClass: Record<Category, string> = {
 function Slot({ slot, onReserve }: { slot: PublicSlot; onReserve: (slot: PublicSlot) => void }) {
   if (slot.state === "available") {
     return (
-      <button className="slot available" onClick={() => onReserve(slot)}>
+      <button className="slot available" onClick={(event) => { event.currentTarget.focus(); onReserve(slot); }}>
         <span>{formatTime(slot.start)}</span>
         <strong>Available</strong>
       </button>
@@ -77,6 +79,7 @@ export default function SchedulePage() {
   const [selectedDay, setSelectedDay] = useState("");
   const currentWeek = useMemo(() => startOfWeek(), []);
   const lastWeek = useMemo(() => startOfWeek(new Date(Date.now() + 90 * 86_400_000)), []);
+  const isMobile = useMediaQuery("(max-width: 680px)");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,13 +94,6 @@ export default function SchedulePage() {
   }, [week]);
 
   useEffect(() => { void load(); }, [load]);
-  useEffect(() => {
-    if (!bookingSlot) return;
-    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setBookingSlot(null); };
-    document.addEventListener("keydown", close);
-    return () => document.removeEventListener("keydown", close);
-  }, [bookingSlot]);
-
   const days = useMemo(() => {
     const grouped = new Map<string, PublicSlot[]>();
     for (const slot of data?.slots ?? []) {
@@ -124,7 +120,7 @@ export default function SchedulePage() {
           <p className="eyebrow">Your neighborhood event space</p>
           <h1>Bring pets and people together.</h1>
           <p>Find an open time, tell us about your group, and confirm by email. No account or password needed.</p>
-          <button className="button primary hero-cta" onClick={() => setBookingSlot("open")}>Reserve the space</button>
+          <button className="button primary hero-cta" onClick={(event) => { event.currentTarget.focus(); setBookingSlot("open"); }}>Reserve the space</button>
         </div>
         <aside className="how-card" aria-label="How reservations work">
           <h2>Simple from start to finish</h2>
@@ -136,7 +132,7 @@ export default function SchedulePage() {
         </aside>
       </section>
 
-      <section className="schedule-section" aria-labelledby="schedule-title">
+      <section className="schedule-section" aria-labelledby="schedule-title" aria-busy={loading}>
         <div className="section-heading">
           <div>
             <p className="eyebrow">One shared space · hourly reservations</p>
@@ -170,14 +166,22 @@ export default function SchedulePage() {
           <span><i className="held-dot" /> Temporarily held</span>
         </div>
 
-        {loading && <div className="state-card" role="status">Loading the neighborhood schedule…</div>}
+        {loading && <div className="state-card" role="status" aria-live="polite">Loading the neighborhood schedule…</div>}
         {error && <div className="state-card error-state" role="alert"><strong>We couldn’t load the schedule.</strong><span>{error}</span><button className="button ghost" onClick={() => void load()}>Try again</button></div>}
         {!loading && !error && (
           <>
-            {days.length > 0 && <div className="mobile-day-picker" role="tablist" aria-label="Choose a day">{days.map(([day, slots]) => <button role="tab" aria-selected={selectedDay === day} className={selectedDay === day ? "active" : ""} key={day} onClick={() => setSelectedDay(day)}><strong>{formatDay(slots[0].start)}</strong><span>{slots.filter((slot) => slot.state === "available").length} open</span></button>)}</div>}
+            {isMobile && days.length > 0 && <AccessibleTabs idPrefix="schedule-day" className="mobile-day-picker" label="Choose a day" selected={selectedDay} onSelect={setSelectedDay} items={days.map(([day, slots]) => ({ id: day, label: <><strong>{formatDay(slots[0].start)}</strong><span>{slots.filter((slot) => slot.state === "available").length} open</span></> }))} />}
+            {isMobile && selectedDay && <p className="sr-only" aria-live="polite">Showing {formatDay(days.find(([day]) => day === selectedDay)?.[1][0]?.start ?? `${selectedDay}T12:00:00Z`)}</p>}
             {days.length === 0 ? <div className="state-card">No reservable times are available this week.</div> : <div className={view === "week" ? "week-grid" : "list-view"}>
               {days.map(([day, slots]) => (
-                <section className={`day-card ${selectedDay === day ? "mobile-selected" : ""}`} key={day}>
+                <section
+                  className={`day-card ${selectedDay === day ? "mobile-selected" : ""}`}
+                  key={day}
+                  id={isMobile ? `schedule-day-panel-${day}` : undefined}
+                  role={isMobile ? "tabpanel" : undefined}
+                  aria-labelledby={isMobile ? `schedule-day-tab-${day}` : undefined}
+                  hidden={isMobile && selectedDay !== day}
+                >
                   <header>
                     <h3>{slots[0] ? formatDay(slots[0].start) : day}</h3>
                     <span>{slots.filter((slot) => slot.state === "available").length} open</span>
@@ -201,14 +205,12 @@ export default function SchedulePage() {
       </section>
 
       {bookingSlot && (
-        <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setBookingSlot(null); }}>
           <BookingForm
             initialStart={bookingSlot === "open" ? undefined : bookingSlot.slot.start}
             maxDurationHours={bookingSlot === "open" ? 4 : bookingSlot.maxDurationHours}
             onClose={() => setBookingSlot(null)}
             onConfirmed={() => void load()}
           />
-        </div>
       )}
     </>
   );

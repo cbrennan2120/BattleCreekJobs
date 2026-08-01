@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "node",
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
     coverage: { reporter: ["text", "html"] },
   },
 });
