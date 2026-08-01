@@ -1,12 +1,13 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { api, ApiError } from "../api";
 import { CATEGORIES, type BookingStartInput, type Category } from "../types";
-import { fromStoreLocalInput, toLocalInput } from "../date";
+import { addHoursToStoreInput, bookingInputBounds, fromStoreLocalInput, toLocalInput } from "../date";
 
 interface Props {
   initialStart?: string;
-  initialEnd?: string;
+  maxDurationHours?: number;
   onClose: () => void;
   onConfirmed: () => void;
 }
@@ -23,11 +24,11 @@ interface VerifyResponse {
   manageUrl: string;
 }
 
-export default function BookingForm({ initialStart, initialEnd, onClose, onConfirmed }: Props) {
+export default function BookingForm({ initialStart, maxDurationHours = 4, onClose, onConfirmed }: Props) {
   const defaults = useMemo(() => ({
     start: initialStart ? toLocalInput(initialStart) : "",
-    end: initialEnd ? toLocalInput(initialEnd) : "",
-  }), [initialStart, initialEnd]);
+    end: "",
+  }), [initialStart]);
   const [form, setForm] = useState<BookingStartInput>({
     groupName: "",
     category: "Community Event",
@@ -43,7 +44,10 @@ export default function BookingForm({ initialStart, initialEnd, onClose, onConfi
   const [confirmed, setConfirmed] = useState<VerifyResponse | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [durationHours, setDurationHours] = useState(1);
+  const bounds = useMemo(() => bookingInputBounds(), []);
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   const update = (key: keyof BookingStartInput, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -51,6 +55,10 @@ export default function BookingForm({ initialStart, initialEnd, onClose, onConfi
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (siteKey && !form.turnstileToken) {
+      setError("Please complete the spam-protection check before continuing.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -59,13 +67,17 @@ export default function BookingForm({ initialStart, initialEnd, onClose, onConfi
         body: JSON.stringify({
           ...form,
           start: fromStoreLocalInput(form.start),
-          end: fromStoreLocalInput(form.end),
+          end: fromStoreLocalInput(addHoursToStoreInput(form.start, durationHours)),
         }),
       });
       setChallenge(result);
       if (result.devCode) setCode(result.devCode);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "We could not hold that time.");
+      if (siteKey) {
+        update("turnstileToken", "");
+        turnstileRef.current?.reset();
+      }
     } finally {
       setBusy(false);
     }
@@ -138,11 +150,13 @@ export default function BookingForm({ initialStart, initialEnd, onClose, onConfi
         </div>
         <div>
           <label htmlFor="start">Starts</label>
-          <input id="start" type="datetime-local" step="1800" value={form.start} onChange={(e) => update("start", e.target.value)} required />
+          <input id="start" type="datetime-local" step="3600" min={bounds.min} max={bounds.max} value={form.start} onChange={(e) => update("start", e.target.value)} required />
         </div>
         <div>
-          <label htmlFor="end">Ends</label>
-          <input id="end" type="datetime-local" step="1800" value={form.end} onChange={(e) => update("end", e.target.value)} required />
+          <label htmlFor="duration">Length</label>
+          <select id="duration" value={durationHours} onChange={(e) => setDurationHours(Number(e.target.value))}>
+            {Array.from({ length: Math.max(1, Math.min(4, maxDurationHours)) }, (_, index) => index + 1).map((hours) => <option key={hours} value={hours}>{hours} hour{hours === 1 ? "" : "s"}</option>)}
+          </select>
         </div>
         <div>
           <label htmlFor="contact-name">Contact name</label>
@@ -162,13 +176,28 @@ export default function BookingForm({ initialStart, initialEnd, onClose, onConfi
         </div>
         {siteKey && (
           <div className="field-span turnstile-wrap">
-            <Turnstile siteKey={siteKey} onSuccess={(token) => update("turnstileToken", token)} options={{ theme: "light" }} />
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={siteKey}
+              onSuccess={(token) => { update("turnstileToken", token); setError(""); }}
+              onExpire={() => {
+                update("turnstileToken", "");
+                setError("The spam-protection check expired and is refreshing. Please try again.");
+                turnstileRef.current?.reset();
+              }}
+              onError={() => {
+                update("turnstileToken", "");
+                setError("The spam-protection check could not finish. It is refreshing now.");
+                turnstileRef.current?.reset();
+              }}
+              options={{ theme: "light", refreshExpired: "manual" }}
+            />
           </div>
         )}
         {error && <p className="form-error field-span" role="alert">{error}</p>}
         <div className="dialog-actions field-span">
           <button type="button" className="button ghost" onClick={onClose}>Not yet</button>
-          <button className="button primary" disabled={busy}>{busy ? "Holding your time…" : "Email my verification code"}</button>
+          <button className="button primary" disabled={busy || Boolean(siteKey && !form.turnstileToken)}>{busy ? "Holding your time…" : "Email my verification code"}</button>
         </div>
       </form>
     </div>

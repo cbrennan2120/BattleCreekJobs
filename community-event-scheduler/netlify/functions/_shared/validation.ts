@@ -40,8 +40,8 @@ export const hoursSchema = z.object({
   hours: z.array(z.object({
     id: z.string().uuid(),
     dayOfWeek: z.number().int().min(1).max(7),
-    opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-    closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    opensAt: z.string().regex(/^([01]\d|2[0-3]):00$/),
+    closesAt: z.string().regex(/^([01]\d|2[0-3]):00$/),
     isClosed: z.boolean(),
   })).length(7),
 });
@@ -94,8 +94,8 @@ const eventDetailsSchema = z.object({
 
 const manualScheduleSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):(00|30)$/),
-  durationMinutes: z.number().int().min(30).max(1440).refine((value) => value % 30 === 0, "Duration must use 30-minute blocks."),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):00$/),
+  durationMinutes: z.number().int().min(60).max(1440).refine((value) => value % 60 === 0, "Duration must use one-hour blocks."),
   recurrence: recurrenceRuleSchema,
 });
 

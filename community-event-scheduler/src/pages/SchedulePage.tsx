@@ -24,7 +24,7 @@ function Slot({ slot, onReserve }: { slot: PublicSlot; onReserve: (slot: PublicS
   if (slot.state === "booked") {
     return (
       <div className={`slot booked ${slot.category ? categoryClass[slot.category] : ""}`}>
-        <span>{formatTime(slot.start)}</span>
+        <span>{formatTime(slot.start)}–{formatTime(slot.end)}</span>
         <strong>{slot.groupName}</strong>
         <small>{slot.category}</small>
       </div>
@@ -32,10 +32,38 @@ function Slot({ slot, onReserve }: { slot: PublicSlot; onReserve: (slot: PublicS
   }
   return (
     <div className={`slot ${slot.state}`}>
-      <span>{formatTime(slot.start)}</span>
+      <span>{formatTime(slot.start)}–{formatTime(slot.end)}</span>
       <strong>{slot.state === "pending" ? "Temporarily held" : "Unavailable"}</strong>
     </div>
   );
+}
+
+export function collapseOccupiedSlots(slots: PublicSlot[]): PublicSlot[] {
+  const result: PublicSlot[] = [];
+  for (const slot of slots) {
+    const previous = result[result.length - 1];
+    const sameOccupiedEntry = previous
+      && slot.state !== "available"
+      && previous.state === slot.state
+      && previous.end === slot.start
+      && previous.groupName === slot.groupName
+      && previous.category === slot.category;
+    if (sameOccupiedEntry) previous.end = slot.end;
+    else result.push({ ...slot });
+  }
+  return result;
+}
+
+export function consecutiveAvailableHours(selected: PublicSlot, slots: PublicSlot[]): number {
+  let end = selected.start;
+  let hours = 0;
+  while (hours < 4) {
+    const next = slots.find((slot) => slot.start === end && slot.state === "available");
+    if (!next) break;
+    hours += 1;
+    end = next.end;
+  }
+  return Math.max(1, hours);
 }
 
 export default function SchedulePage() {
@@ -45,7 +73,10 @@ export default function SchedulePage() {
   const [error, setError] = useState("");
   const [view, setView] = useState<"week" | "list">("week");
   const [category, setCategory] = useState<Category | "all">("all");
-  const [bookingSlot, setBookingSlot] = useState<PublicSlot | "open" | null>(null);
+  const [bookingSlot, setBookingSlot] = useState<"open" | { slot: PublicSlot; maxDurationHours: number } | null>(null);
+  const [selectedDay, setSelectedDay] = useState("");
+  const currentWeek = useMemo(() => startOfWeek(), []);
+  const lastWeek = useMemo(() => startOfWeek(new Date(Date.now() + 90 * 86_400_000)), []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,7 +108,14 @@ export default function SchedulePage() {
     return [...grouped.entries()];
   }, [data, category]);
 
-  const selectSlot = (slot: PublicSlot) => setBookingSlot(slot);
+  useEffect(() => {
+    const keys = days.map(([day]) => day);
+    if (selectedDay && keys.includes(selectedDay)) return;
+    const today = dateKey(data?.generatedAt ?? new Date().toISOString());
+    setSelectedDay(keys.includes(today) ? today : keys.find((day) => day > today) ?? keys[0] ?? "");
+  }, [data, days, selectedDay]);
+
+  const selectSlot = (slot: PublicSlot) => setBookingSlot({ slot, maxDurationHours: consecutiveAvailableHours(slot, data?.slots ?? []) });
 
   return (
     <>
@@ -101,7 +139,7 @@ export default function SchedulePage() {
       <section className="schedule-section" aria-labelledby="schedule-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">One shared space · 30-minute blocks</p>
+            <p className="eyebrow">One shared space · hourly reservations</p>
             <h2 id="schedule-title">Community schedule</h2>
             <p>Everyone can see who is joining us. Personal contact information is visible only to store staff.</p>
           </div>
@@ -113,9 +151,9 @@ export default function SchedulePage() {
 
         <div className="schedule-controls">
           <div className="week-nav">
-            <button onClick={() => setWeek(moveWeek(week, -1))} aria-label="Previous week">←</button>
+            <button onClick={() => setWeek(moveWeek(week, -1))} aria-label="Previous week" disabled={week <= currentWeek}>←</button>
             <button className="today-button" onClick={() => setWeek(startOfWeek())}>This week</button>
-            <button onClick={() => setWeek(moveWeek(week, 1))} aria-label="Next week">→</button>
+            <button onClick={() => setWeek(moveWeek(week, 1))} aria-label="Next week" disabled={week >= lastWeek}>→</button>
           </div>
           <label className="filter-label">
             <span>Show category</span>
@@ -135,19 +173,22 @@ export default function SchedulePage() {
         {loading && <div className="state-card" role="status">Loading the neighborhood schedule…</div>}
         {error && <div className="state-card error-state" role="alert"><strong>We couldn’t load the schedule.</strong><span>{error}</span><button className="button ghost" onClick={() => void load()}>Try again</button></div>}
         {!loading && !error && (
-          <div className={view === "week" ? "week-grid" : "list-view"}>
-            {days.map(([day, slots]) => (
-              <section className="day-card" key={day}>
-                <header>
-                  <h3>{slots[0] ? formatDay(slots[0].start) : day}</h3>
-                  <span>{slots.filter((slot) => slot.state === "available").length} open</span>
-                </header>
-                <div className="day-slots">
-                  {slots.length ? slots.map((slot) => <Slot key={slot.start} slot={slot} onReserve={selectSlot} />) : <p className="closed-day">No times available</p>}
-                </div>
-              </section>
-            ))}
-          </div>
+          <>
+            {days.length > 0 && <div className="mobile-day-picker" role="tablist" aria-label="Choose a day">{days.map(([day, slots]) => <button role="tab" aria-selected={selectedDay === day} className={selectedDay === day ? "active" : ""} key={day} onClick={() => setSelectedDay(day)}><strong>{formatDay(slots[0].start)}</strong><span>{slots.filter((slot) => slot.state === "available").length} open</span></button>)}</div>}
+            {days.length === 0 ? <div className="state-card">No reservable times are available this week.</div> : <div className={view === "week" ? "week-grid" : "list-view"}>
+              {days.map(([day, slots]) => (
+                <section className={`day-card ${selectedDay === day ? "mobile-selected" : ""}`} key={day}>
+                  <header>
+                    <h3>{slots[0] ? formatDay(slots[0].start) : day}</h3>
+                    <span>{slots.filter((slot) => slot.state === "available").length} open</span>
+                  </header>
+                  <div className="day-slots">
+                    {collapseOccupiedSlots(slots).map((slot) => <Slot key={slot.start} slot={slot} onReserve={selectSlot} />)}
+                  </div>
+                </section>
+              ))}
+            </div>}
+          </>
         )}
       </section>
 
@@ -162,8 +203,8 @@ export default function SchedulePage() {
       {bookingSlot && (
         <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setBookingSlot(null); }}>
           <BookingForm
-            initialStart={bookingSlot === "open" ? undefined : bookingSlot.start}
-            initialEnd={bookingSlot === "open" ? undefined : bookingSlot.end}
+            initialStart={bookingSlot === "open" ? undefined : bookingSlot.slot.start}
+            maxDurationHours={bookingSlot === "open" ? 4 : bookingSlot.maxDurationHours}
             onClose={() => setBookingSlot(null)}
             onConfirmed={() => void load()}
           />

@@ -4,7 +4,7 @@ import { HttpError } from "./errors";
 
 export const STORE_TIMEZONE = "America/Detroit";
 export const RESOURCE_ID = "battle-creek-event-space";
-export const SLOT_MINUTES = 30;
+export const SLOT_MINUTES = 60;
 export const MAX_DURATION_MINUTES = 240;
 export const MIN_NOTICE_HOURS = 24;
 export const MAX_HORIZON_DAYS = 90;
@@ -31,10 +31,10 @@ function parseWindow(window: BookingWindow, maximumMinutes: number, kind: "reser
   const milliseconds = end.getTime() - start.getTime();
   if (milliseconds < SLOT_MINUTES * 60_000 || milliseconds > maximumMinutes * 60_000 || milliseconds % (SLOT_MINUTES * 60_000) !== 0) {
     const limit = kind === "hold" ? "24 hours" : "four hours";
-    throw new HttpError(400, `${kind === "hold" ? "Holds" : "Reservations"} must use consecutive 30-minute blocks and may last up to ${limit}.`);
+    throw new HttpError(400, `${kind === "hold" ? "Holds" : "Reservations"} must use consecutive one-hour blocks and may last up to ${limit}.`);
   }
   if (localStart.toISODate() !== localEnd.minus({ milliseconds: 1 }).toISODate()) throw new HttpError(400, `A ${kind} must start and end on the same store day.`);
-  if (localStart.minute % SLOT_MINUTES !== 0 || localStart.second !== 0 || localEnd.minute % SLOT_MINUTES !== 0 || localEnd.second !== 0) throw new HttpError(400, "Start and end times must fall on a 30-minute boundary.");
+  if (localStart.minute !== 0 || localStart.second !== 0 || localEnd.minute !== 0 || localEnd.second !== 0) throw new HttpError(400, "Start and end times must fall on a whole-hour boundary.");
   return { start, end, localStart, localEnd, slots: slotStarts(start, end) };
 }
 
@@ -90,10 +90,13 @@ export function generateAvailability(
   hours: Pick<WeeklyHoursRow, "dayOfWeek" | "opensAt" | "closesAt" | "isClosed">[],
   blackouts: BlackoutLike[],
   activeBookings: BookingRow[],
+  now = new Date(),
 ): PublicSlot[] {
   const firstDay = DateTime.fromISO(weekStart, { zone: STORE_TIMEZONE }).startOf("day");
   if (!firstDay.isValid) throw new HttpError(400, "weekStart must be a valid date.");
   const result: PublicSlot[] = [];
+  const firstBookable = now.getTime() + MIN_NOTICE_HOURS * 3_600_000;
+  const lastBookable = now.getTime() + MAX_HORIZON_DAYS * 86_400_000;
 
   for (let offset = 0; offset < 7; offset += 1) {
     const day = firstDay.plus({ days: offset });
@@ -106,11 +109,11 @@ export function generateAvailability(
       const start = cursor.toJSDate();
       const end = next.toJSDate();
       const blackout = blackouts.some((item) => start < item.endsAt && end > item.startsAt);
-      const booking = activeBookings.find((item) => start >= item.startsAt && start < item.endsAt);
+      const booking = activeBookings.find((item) => start < item.endsAt && end > item.startsAt);
       if (blackout) result.push({ start: cursor.toUTC().toISO()!, end: next.toUTC().toISO()!, state: "blackout" });
       else if (booking?.status === "confirmed") result.push({ start: cursor.toUTC().toISO()!, end: next.toUTC().toISO()!, state: "booked", groupName: booking.groupName, category: booking.category });
       else if (booking?.status === "pending_verification") result.push({ start: cursor.toUTC().toISO()!, end: next.toUTC().toISO()!, state: "pending" });
-      else result.push({ start: cursor.toUTC().toISO()!, end: next.toUTC().toISO()!, state: "available" });
+      else if (start.getTime() >= firstBookable && start.getTime() <= lastBookable) result.push({ start: cursor.toUTC().toISO()!, end: next.toUTC().toISO()!, state: "available" });
       cursor = next;
     }
   }

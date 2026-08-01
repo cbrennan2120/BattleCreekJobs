@@ -1,11 +1,12 @@
 import type { Config, Context } from "@netlify/functions";
 import { and, asc, eq, gt, inArray, lt } from "drizzle-orm";
 import { getDb } from "../../db";
-import { auditLog, blackoutPeriods, bookings } from "../../db/schema";
+import { auditLog, blackoutPeriods, bookings, bookingSlots } from "../../db/schema";
 import { requireAdmin } from "./_shared/admin-auth";
-import { HttpError } from "./_shared/errors";
+import { HttpError, isUniqueViolation } from "./_shared/errors";
 import { handleError, json, methodNotAllowed, readJson } from "./_shared/http";
 import { blackoutSchema } from "./_shared/validation";
+import { RESOURCE_ID, slotStarts, validateStaffHoldWindow } from "./_shared/scheduling";
 
 export default async (request: Request, context: Context) => {
   try {
@@ -20,17 +21,27 @@ export default async (request: Request, context: Context) => {
       const input = blackoutSchema.parse(await readJson(request));
       const startsAt = new Date(input.startsAt);
       const endsAt = new Date(input.endsAt);
-      if (endsAt <= startsAt) throw new HttpError(400, "Blackout end time must be after its start time.");
+      validateStaffHoldWindow({ start: input.startsAt, end: input.endsAt });
       const db = getDb();
-      const [conflict] = await db.select({ id: bookings.id, groupName: bookings.groupName }).from(bookings).where(and(
-        inArray(bookings.status, ["confirmed", "pending_verification"]),
-        lt(bookings.startsAt, endsAt),
-        gt(bookings.endsAt, startsAt),
-      )).limit(1);
-      if (conflict) throw new HttpError(409, `This blackout overlaps ${conflict.groupName}. Move or cancel that booking first.`);
-      const [row] = await db.insert(blackoutPeriods).values({ startsAt, endsAt, reason: input.reason }).returning();
-      await db.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "blackout_created", entityType: "blackout", entityId: row.id, metadata: { reason: row.reason } });
-      return json({ blackout: row }, { status: 201 });
+      try {
+        const row = await db.transaction(async (tx) => {
+          const [conflict] = await tx.select({ id: bookings.id, groupName: bookings.groupName }).from(bookings).where(and(
+            inArray(bookings.status, ["confirmed", "pending_verification"]),
+            lt(bookings.startsAt, endsAt),
+            gt(bookings.endsAt, startsAt),
+          )).limit(1);
+          if (conflict) throw new HttpError(409, `This blackout overlaps ${conflict.groupName}. Move or cancel that booking first.`);
+          const [created] = await tx.insert(blackoutPeriods).values({ startsAt, endsAt, reason: input.reason }).returning();
+          await tx.insert(bookingSlots).values(slotStarts(startsAt, endsAt).map((slotStart) => ({ blackoutId: created.id, resourceId: RESOURCE_ID, slotStart })));
+          await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "blackout_created", entityType: "blackout", entityId: created.id, metadata: { reason: created.reason } });
+          return created;
+        });
+        return json({ blackout: row }, { status: 201 });
+      } catch (error) {
+        if (error instanceof HttpError) throw error;
+        if (isUniqueViolation(error)) throw new HttpError(409, "Another entry claimed part of this time. Refresh the schedule and try again.");
+        throw error;
+      }
     }
     if (request.method === "DELETE" && id) {
       await requireAdmin(request, true);

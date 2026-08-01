@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, ApiError } from "../api";
-import { formatDay, formatTime, fromStoreLocalInput, toLocalInput } from "../date";
+import { addHoursToStoreInput, bookingInputBounds, formatDay, formatTime, fromStoreLocalInput, hoursBetween, toLocalInput } from "../date";
 
 interface ManagedBooking {
   groupName: string;
@@ -17,17 +17,18 @@ interface ManagedBooking {
 export default function ManagePage({ token }: { token: string }) {
   const [booking, setBooking] = useState<ManagedBooking | null>(null);
   const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [durationHours, setDurationHours] = useState(1);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const bounds = bookingInputBounds();
 
   const load = async () => {
     try {
       const result = await api<ManagedBooking>(`/api/manage/${token}`);
       setBooking(result);
       setStart(toLocalInput(result.start));
-      setEnd(toLocalInput(result.end));
+      setDurationHours(Math.max(1, Math.min(4, Math.round(hoursBetween(result.start, result.end)))));
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "This private link could not be opened.");
     }
@@ -43,9 +44,13 @@ export default function ManagePage({ token }: { token: string }) {
     try {
       const result = await api<ManagedBooking>(`/api/manage/${token}`, {
         method: "POST",
-        body: JSON.stringify(action === "cancel" ? { action } : { action, start: fromStoreLocalInput(start), end: fromStoreLocalInput(end) }),
+        body: JSON.stringify(action === "cancel" ? { action } : { action, start: fromStoreLocalInput(start), end: fromStoreLocalInput(addHoursToStoreInput(start, durationHours)) }),
       });
       setBooking(result);
+      if (action === "reschedule") {
+        setStart(toLocalInput(result.start));
+        setDurationHours(Math.max(1, Math.min(4, Math.round(hoursBetween(result.start, result.end)))));
+      }
       setNotice(action === "cancel" ? "Your reservation is cancelled and the time is available again." : "Your reservation has been moved.");
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "That change could not be saved.");
@@ -77,9 +82,9 @@ export default function ManagePage({ token }: { token: string }) {
               <form className="reschedule-form" onSubmit={(event) => void act("reschedule", event)}>
                 <h3>Choose another time</h3>
                 <label htmlFor="manage-start">Starts</label>
-                <input id="manage-start" type="datetime-local" step="1800" value={start} onChange={(e) => setStart(e.target.value)} required />
-                <label htmlFor="manage-end">Ends</label>
-                <input id="manage-end" type="datetime-local" step="1800" value={end} onChange={(e) => setEnd(e.target.value)} required />
+                <input id="manage-start" type="datetime-local" step="3600" min={bounds.min} max={bounds.max} value={start} onChange={(e) => setStart(e.target.value)} required />
+                <label htmlFor="manage-duration">Length</label>
+                <select id="manage-duration" value={durationHours} onChange={(e) => setDurationHours(Number(e.target.value))}>{[1, 2, 3, 4].map((hours) => <option key={hours} value={hours}>{hours} hour{hours === 1 ? "" : "s"}</option>)}</select>
                 <button className="button primary" disabled={busy}>{busy ? "Saving…" : "Move reservation"}</button>
               </form>
               <div className="danger-zone">

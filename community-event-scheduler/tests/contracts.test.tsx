@@ -3,10 +3,12 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import App from "../src/App";
-import { fromStoreLocalInput } from "../src/date";
+import { addHoursToStoreInput, bookingInputBounds, fromStoreLocalInput, startOfWeek } from "../src/date";
+import { collapseOccupiedSlots, consecutiveAvailableHours } from "../src/pages/SchedulePage";
+import type { PublicSlot } from "../src/types";
 
 describe("database concurrency contract", () => {
-  it("enforces one resource claim per 30-minute start", () => {
+  it("enforces one resource claim per hourly start", () => {
     const migrationRoot = join(process.cwd(), "netlify", "database", "migrations");
     const directory = readdirSync(migrationRoot, { withFileTypes: true })
       .find((entry) => entry.isDirectory() && /^\d+_[a-z0-9_-]+$/.test(entry.name))?.name;
@@ -46,5 +48,33 @@ describe("public shell", () => {
   it("interprets visitor-entered wall time in the Battle Creek timezone", () => {
     expect(fromStoreLocalInput("2026-08-10T09:00")).toBe("2026-08-10T13:00:00.000Z");
     expect(fromStoreLocalInput("2026-12-10T09:00")).toBe("2026-12-10T14:00:00.000Z");
+  });
+
+  it("calculates hourly booking inputs and Battle Creek week boundaries", () => {
+    expect(addHoursToStoreInput("2026-08-10T09:00", 3)).toBe("2026-08-10T12:00");
+    expect(bookingInputBounds(new Date("2026-08-01T12:30:00.000Z"))).toEqual({ min: "2026-08-02T09:00", max: "2026-10-30T08:00" });
+    expect(startOfWeek(new Date("2026-08-03T02:00:00.000Z"))).toBe("2026-07-27");
+    expect(startOfWeek(new Date("2026-08-03T05:00:00.000Z"))).toBe("2026-08-03");
+  });
+
+  it("collapses occupied hours and limits duration to consecutive open hours", () => {
+    const slots: PublicSlot[] = [
+      { start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T14:00:00.000Z", state: "available" },
+      { start: "2026-08-10T14:00:00.000Z", end: "2026-08-10T15:00:00.000Z", state: "available" },
+      { start: "2026-08-10T15:00:00.000Z", end: "2026-08-10T16:00:00.000Z", state: "booked", groupName: "Rescue", category: "Rescue Organization" },
+      { start: "2026-08-10T16:00:00.000Z", end: "2026-08-10T17:00:00.000Z", state: "booked", groupName: "Rescue", category: "Rescue Organization" },
+    ];
+    expect(consecutiveAvailableHours(slots[0], slots)).toBe(2);
+    expect(collapseOccupiedSlots(slots)).toEqual([slots[0], slots[1], { ...slots[2], end: slots[3].end }]);
+  });
+
+  it("requires a fresh Turnstile token and resets consumed or expired challenges", () => {
+    const bookingForm = readFileSync(join(process.cwd(), "src", "components", "BookingForm.tsx"), "utf8");
+    expect(bookingForm).toContain("useRef<TurnstileInstance | null>(null)");
+    expect(bookingForm).toContain("if (siteKey && !form.turnstileToken)");
+    expect(bookingForm).toContain("turnstileRef.current?.reset()");
+    expect(bookingForm).toContain("onExpire={() => {");
+    expect(bookingForm).toContain("onError={() => {");
+    expect(bookingForm).toContain("busy || Boolean(siteKey && !form.turnstileToken)");
   });
 });

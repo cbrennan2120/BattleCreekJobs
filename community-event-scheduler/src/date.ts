@@ -8,17 +8,17 @@ export function isoDate(date: Date): string {
 }
 
 export function startOfWeek(date = new Date()): string {
-  const copy = new Date(date);
-  const day = copy.getDay() || 7;
-  copy.setHours(12, 0, 0, 0);
-  copy.setDate(copy.getDate() - day + 1);
-  return isoDate(copy);
+  const storeDate = dateKey(date.toISOString());
+  const copy = new Date(`${storeDate}T12:00:00Z`);
+  const day = copy.getUTCDay() || 7;
+  copy.setUTCDate(copy.getUTCDate() - day + 1);
+  return copy.toISOString().slice(0, 10);
 }
 
 export function moveWeek(weekStart: string, amount: number): string {
-  const date = new Date(`${weekStart}T12:00:00`);
-  date.setDate(date.getDate() + amount * 7);
-  return isoDate(date);
+  const date = new Date(`${weekStart}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + amount * 7);
+  return date.toISOString().slice(0, 10);
 }
 
 export function dateKey(iso: string): string {
@@ -81,4 +81,30 @@ export function fromStoreLocalInput(value: string): string {
   const offsetName = formatter.formatToParts(guess).find((part) => part.type === "timeZoneName")?.value ?? "GMT-05:00";
   const offset = offsetName.replace("GMT", "") || "+00:00";
   return new Date(`${date}T${time}:00${offset}`).toISOString();
+}
+
+export function addHoursToStoreInput(value: string, hours: number): string {
+  const instant = new Date(fromStoreLocalInput(value));
+  instant.setTime(instant.getTime() + hours * 3_600_000);
+  return toLocalInput(instant.toISOString());
+}
+
+export function hoursBetween(start: string, end: string): number {
+  return (new Date(end).getTime() - new Date(start).getTime()) / 3_600_000;
+}
+
+function hourInput(instant: Date, direction: "ceil" | "floor"): string {
+  const local = toLocalInput(instant.toISOString());
+  const minute = Number(local.slice(-2));
+  const hasPartialHour = minute !== 0 || instant.getUTCSeconds() !== 0 || instant.getUTCMilliseconds() !== 0;
+  if (!hasPartialHour) return local;
+  const adjustment = direction === "ceil" ? 60 - minute : -minute;
+  return toLocalInput(new Date(instant.getTime() + adjustment * 60_000).toISOString());
+}
+
+export function bookingInputBounds(now = new Date()): { min: string; max: string } {
+  return {
+    min: hourInput(new Date(now.getTime() + 24 * 3_600_000), "ceil"),
+    max: hourInput(new Date(now.getTime() + 90 * 86_400_000), "floor"),
+  };
 }

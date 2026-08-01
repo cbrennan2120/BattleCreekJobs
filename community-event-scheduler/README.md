@@ -6,7 +6,7 @@ Public scheduling for the shared community event space at Pet Supplies Plus Batt
 
 - Responsive PSP-branded week and list views
 - Rescue, community event, birthday/private party, VIP vaccine clinic, and dog trainer categories
-- Consecutive 30-minute reservations from 30 minutes through four hours
+- Consecutive hourly reservations from one through four hours
 - 24-hour notice and 90-day booking horizon in `America/Detroit`
 - Ten-minute atomic holds with six-digit email verification
 - Private cancellation/rescheduling links

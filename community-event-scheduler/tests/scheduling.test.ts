@@ -42,13 +42,13 @@ function booking(overrides: Partial<BookingRow> = {}): BookingRow {
 describe("slot policy", () => {
   const now = new Date("2026-07-31T12:00:00.000Z");
 
-  it("creates consecutive 30-minute starts", () => {
-    expect(slotStarts(new Date("2026-08-10T13:00:00Z"), new Date("2026-08-10T15:00:00Z"))).toHaveLength(4);
+  it("creates consecutive one-hour starts", () => {
+    expect(slotStarts(new Date("2026-08-10T13:00:00Z"), new Date("2026-08-10T15:00:00Z"))).toHaveLength(2);
   });
 
   it("accepts a valid four-hour reservation inside store hours", () => {
     const result = validateBookingWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T17:00:00.000Z" }, hours, [], now);
-    expect(result.slots).toHaveLength(8);
+    expect(result.slots).toHaveLength(4);
   });
 
   it("rejects durations longer than four hours", () => {
@@ -70,14 +70,14 @@ describe("slot policy", () => {
   });
 
   it("lets staff schedule an immediate event but still enforces hours and four hours", () => {
-    expect(validateStaffEventWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T13:30:00.000Z" }, hours).slots).toHaveLength(1);
-    expect(() => validateStaffEventWindow({ start: "2026-08-10T12:30:00.000Z", end: "2026-08-10T13:00:00.000Z" }, hours)).toThrow(/outside/);
+    expect(validateStaffEventWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T14:00:00.000Z" }, hours).slots).toHaveLength(1);
+    expect(() => validateStaffEventWindow({ start: "2026-08-10T12:00:00.000Z", end: "2026-08-10T13:00:00.000Z" }, hours)).toThrow(/outside/);
     expect(() => validateStaffEventWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-10T17:30:00.000Z" }, hours)).toThrow(/four hours/);
   });
 
-  it("allows same-day 30-minute store holds up to 24 hours", () => {
+  it("allows same-day hourly store holds up to 24 hours", () => {
     expect(validateStaffHoldWindow({ start: "2026-08-10T04:00:00.000Z", end: "2026-08-11T04:00:00.000Z" })).toBeTruthy();
-    expect(() => validateStaffHoldWindow({ start: "2026-08-10T04:15:00.000Z", end: "2026-08-10T05:15:00.000Z" })).toThrow(/30-minute/);
+    expect(() => validateStaffHoldWindow({ start: "2026-08-10T04:30:00.000Z", end: "2026-08-10T05:30:00.000Z" })).toThrow(/whole-hour/);
     expect(() => validateStaffHoldWindow({ start: "2026-08-10T13:00:00.000Z", end: "2026-08-11T13:30:00.000Z" })).toThrow(/24 hours/);
   });
 });
@@ -101,9 +101,23 @@ describe("public availability", () => {
     expect(payload).not.toContain("Battle Creek Rescue");
   });
 
+  it("hides ineligible open hours but retains nearby booked events", () => {
+    const now = new Date("2026-08-01T12:30:00.000Z");
+    const nearby = booking({ startsAt: new Date("2026-08-01T17:00:00.000Z"), endsAt: new Date("2026-08-01T18:00:00.000Z") });
+    const result = generateAvailability("2026-07-27", hours, [], [nearby], now);
+    expect(result.some((slot) => slot.state === "available" && new Date(slot.start).getTime() < now.getTime() + 24 * 3_600_000)).toBe(false);
+    expect(result.some((slot) => slot.state === "booked" && slot.groupName === "Battle Creek Rescue")).toBe(true);
+  });
+
+  it("omits open hours beyond the 90-day booking horizon", () => {
+    const now = new Date("2026-08-01T12:00:00.000Z");
+    const result = generateAvailability("2026-11-02", hours, [], [], now);
+    expect(result).toHaveLength(0);
+  });
+
   it("generates the Sunday schedule across the fall DST transition", () => {
-    const result = generateAvailability("2026-10-26", hours, [], []);
+    const result = generateAvailability("2026-10-26", hours, [], [], new Date("2026-10-01T12:00:00.000Z"));
     const sunday = result.filter((slot) => DateTime.fromISO(slot.start).setZone("America/Detroit").toISODate() === "2026-11-01");
-    expect(sunday).toHaveLength(16);
+    expect(sunday).toHaveLength(8);
   });
 });

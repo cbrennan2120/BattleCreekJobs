@@ -3,14 +3,12 @@ import { and, eq, gt, inArray, lt, or } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { getDb } from "../../db";
 import { blackoutPeriods, bookings, weeklyHours } from "../../db/schema";
-import { cleanupExpired } from "./_shared/cleanup";
 import { handleError, json, methodNotAllowed } from "./_shared/http";
 import { generateAvailability, STORE_TIMEZONE } from "./_shared/scheduling";
 
 export default async (request: Request) => {
   if (request.method !== "GET") return methodNotAllowed(["GET"]);
   try {
-    await cleanupExpired();
     const url = new URL(request.url);
     const requested = url.searchParams.get("weekStart");
     const anchor = requested ? DateTime.fromISO(requested, { zone: STORE_TIMEZONE }) : DateTime.now().setZone(STORE_TIMEZONE);
