@@ -11,7 +11,7 @@ export default async (request: Request, context: Context) => {
     if (request.method === "POST") {
       const input = loginSchema.parse(await readJson(request));
       await Promise.all([verifyTurnstile(input.turnstileToken, context.ip), enforceRateLimit("admin_login", context.ip, 8, 30)]);
-      const session = await createAdminSession(input.passcode);
+      const session = await createAdminSession(input.passcode, context.ip);
       return json({ csrfToken: session.csrfToken, expiresAt: session.expiresAt.toISOString() }, { status: 201, headers: { "Set-Cookie": sessionCookie(session.token, session.expiresAt) } });
     }
     if (request.method === "DELETE") {

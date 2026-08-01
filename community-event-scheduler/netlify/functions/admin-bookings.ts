@@ -51,7 +51,7 @@ export default async (request: Request, context: Context) => {
       await db.transaction(async (tx) => {
         await tx.delete(bookingSlots).where(eq(bookingSlots.bookingId, id));
         await tx.update(bookings).set({ status: "cancelled", cancelledAt: now, updatedAt: now }).where(eq(bookings.id, id));
-        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "booking_cancelled", entityType: "booking", entityId: id });
+        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress: context.ip, action: "booking_cancelled", entityType: "booking", entityId: id });
       });
       if (booking.email) await sendChanged(booking.email, booking.groupName, "Store staff cancelled this reservation. Please contact Pet Supplies Plus Battle Creek if you have questions.").catch(console.error);
       return json({ booking: privateView({ ...booking, status: "cancelled", cancelledAt: now, updatedAt: now }) });

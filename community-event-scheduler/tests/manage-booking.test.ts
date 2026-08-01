@@ -69,7 +69,7 @@ function request(body: Record<string, unknown>) {
   });
 }
 
-const context = { params: { token: "a".repeat(43) } } as never;
+const context = { params: { token: "a".repeat(43) }, ip: "203.0.113.42" } as never;
 
 describe("customer reservation details API", () => {
   beforeEach(() => {
@@ -100,7 +100,7 @@ describe("customer reservation details API", () => {
     expect(mocks.state.updateValues).not.toHaveProperty("email");
     expect(mocks.state.updateValues).not.toHaveProperty("startsAt");
     expect(mocks.state.updateValues).not.toHaveProperty("endsAt");
-    expect(mocks.state.auditValues).toMatchObject({ action: "booking_details_updated", metadata: { fields: ["event name", "category", "contact name", "phone", "private notes"] } });
+    expect(mocks.state.auditValues).toMatchObject({ ipAddress: "203.0.113.42", action: "booking_details_updated", metadata: { fields: ["event name", "category", "contact name", "phone", "private notes"] } });
     expect(mocks.sendChanged).toHaveBeenCalledWith("test@example.com", "Updated Adoption Event", expect.stringContaining("event name"));
     await expect(response.json()).resolves.toMatchObject({
       groupName: "Updated Adoption Event",

@@ -1,16 +1,16 @@
-import type { Config } from "@netlify/functions";
+import type { Config, Context } from "@netlify/functions";
 import { requireAdmin } from "./_shared/admin-auth";
 import { createManualEntry } from "./_shared/admin-entry-service";
 import { handleError, json, methodNotAllowed, readJson } from "./_shared/http";
 import { sendManualEntrySummary } from "./_shared/mailer";
 import { manualEntrySchema } from "./_shared/validation";
 
-export default async (request: Request) => {
+export default async (request: Request, context: Context) => {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
   try {
     await requireAdmin(request, true);
     const draft = manualEntrySchema.parse(await readJson(request));
-    const result = await createManualEntry(draft);
+    const result = await createManualEntry(draft, context.ip);
     let notificationSent: boolean | null = null;
     if (draft.entryType === "event" && draft.event.email && result.created.length) {
       notificationSent = true;

@@ -1,5 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { sql } from "drizzle-orm";
+import { lt, sql } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { rateLimits } from "../../../db/schema";
 import { env, isNetlifyRuntime, requiredEnv } from "./env";
@@ -47,6 +47,7 @@ export async function enforceRateLimit(action: string, rawKey: string, limit: nu
     .onConflictDoUpdate({
       target: [rateLimits.action, rateLimits.keyHash, rateLimits.windowStart],
       set: { count: sql`${rateLimits.count} + 1` },
+      setWhere: lt(rateLimits.count, limit),
     }).returning({ count: rateLimits.count });
-  if (row.count > limit) throw new HttpError(429, "Too many attempts. Please wait and try again.");
+  if (!row) throw new HttpError(429, "Too many attempts. Please wait and try again.");
 }

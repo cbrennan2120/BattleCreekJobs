@@ -26,13 +26,39 @@ describe("database concurrency contract", () => {
     const schema = readFileSync(join(process.cwd(), "db", "schema.ts"), "utf8");
     expect(schema).toContain('uniqueIndex("booking_slots_resource_start_unique")');
   });
+
+  it("adds a nullable IP address to existing audit records", () => {
+    const migration = readFileSync(join(process.cwd(), "netlify", "database", "migrations", "20260801223000_audit_ip_address", "migration.sql"), "utf8");
+    expect(migration).toContain('ALTER TABLE "audit_log" ADD COLUMN "ip_address" text');
+    const schema = readFileSync(join(process.cwd(), "db", "schema.ts"), "utf8");
+    expect(schema).toContain('ipAddress: text("ip_address")');
+  });
 });
 
 describe("public privacy contract", () => {
   it("keeps private manual-entry fields out of public availability types", () => {
     const scheduling = readFileSync(join(process.cwd(), "netlify", "functions", "_shared", "scheduling.ts"), "utf8");
     const publicInterface = scheduling.slice(scheduling.indexOf("export interface PublicSlot"), scheduling.indexOf("export function generateAvailability"));
-    expect(publicInterface).not.toMatch(/contactName|email|phone|privateNotes|reason|seriesId|manageToken/);
+    expect(publicInterface).not.toMatch(/contactName|email|phone|privateNotes|reason|seriesId|manageToken|ipAddress/);
+  });
+});
+
+describe("verification abuse controls", () => {
+  it("declares the verification edge ceiling and passes IPs to every existing audit insertion", () => {
+    const verification = readFileSync(join(process.cwd(), "netlify", "functions", "bookings-verify.ts"), "utf8");
+    expect(verification).toContain('rateLimit: { action: "rate_limit", aggregateBy: ["ip", "domain"], windowLimit: 20, windowSize: 60 }');
+
+    const functionsRoot = join(process.cwd(), "netlify", "functions");
+    const files = [
+      "admin-blackouts.ts", "admin-bookings.ts", "admin-entry.ts", "admin-hours.ts", "bookings-start.ts",
+      "bookings-verify.ts", "manage-booking.ts", join("_shared", "admin-auth.ts"), join("_shared", "admin-entry-service.ts"),
+    ];
+    for (const file of files) {
+      const source = readFileSync(join(functionsRoot, file), "utf8");
+      const auditWrites = source.match(/insert\(auditLog\)\.values\((?:.|\n)*?\}\);/g) ?? [];
+      expect(auditWrites.length, file).toBeGreaterThan(0);
+      for (const write of auditWrites) expect(write, file).toMatch(/ipAddress/);
+    }
   });
 });
 

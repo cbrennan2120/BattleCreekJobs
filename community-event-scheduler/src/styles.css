@@ -232,6 +232,7 @@ fieldset { min-width: 0; }
 .occurrence-row p { margin: .25rem 0 0; color: #8a0710; font-size: .88rem; }
 .scope-dialog { width: min(100%, 520px); }
 table { width: 100%; border-collapse: collapse; }
+.ip-address { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 th, td { padding: .8rem; border-bottom: 1px solid var(--line); text-align: left; }
 th { background: var(--black); color: var(--white); }
 .state-card { min-height: 180px; display: grid; place-items: center; gap: 1rem; padding: 2rem; border: 2px dashed var(--gray); border-radius: var(--radius); text-align: center; }

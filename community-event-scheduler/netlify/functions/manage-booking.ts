@@ -41,7 +41,7 @@ export default async (request: Request, context: Context) => {
       await db.transaction(async (tx) => {
         await tx.delete(bookingSlots).where(eq(bookingSlots.bookingId, booking.id));
         await tx.update(bookings).set({ status: "cancelled", cancelledAt: now, updatedAt: now }).where(eq(bookings.id, booking.id));
-        await tx.insert(auditLog).values({ actorType: "booker", action: "booking_cancelled", entityType: "booking", entityId: booking.id });
+        await tx.insert(auditLog).values({ actorType: "booker", ipAddress: context.ip, action: "booking_cancelled", entityType: "booking", entityId: booking.id });
       });
       if (booking.email) await sendChanged(booking.email, booking.groupName, "Your reservation was cancelled and the time is available again.").catch(console.error);
       return json(ownerView({ ...booking, status: "cancelled", cancelledAt: now, updatedAt: now }));
@@ -71,6 +71,7 @@ export default async (request: Request, context: Context) => {
         if (!updated) throw new HttpError(409, "Only a confirmed reservation can be changed.");
         await tx.insert(auditLog).values({
           actorType: "booker",
+          ipAddress: context.ip,
           action: "booking_details_updated",
           entityType: "booking",
           entityId: booking.id,
@@ -99,7 +100,7 @@ export default async (request: Request, context: Context) => {
         await tx.delete(bookingSlots).where(eq(bookingSlots.bookingId, booking.id));
         await tx.insert(bookingSlots).values(window.slots.map((slotStart) => ({ bookingId: booking.id, resourceId: RESOURCE_ID, slotStart })));
         await tx.update(bookings).set({ startsAt: window.start, endsAt: window.end, updatedAt: now }).where(eq(bookings.id, booking.id));
-        await tx.insert(auditLog).values({ actorType: "booker", action: "booking_rescheduled", entityType: "booking", entityId: booking.id });
+        await tx.insert(auditLog).values({ actorType: "booker", ipAddress: context.ip, action: "booking_rescheduled", entityType: "booking", entityId: booking.id });
       });
     } catch (error) {
       if (isUniqueViolation(error)) throw new HttpError(409, "Someone just reserved part of that time. Your original reservation was not changed.");

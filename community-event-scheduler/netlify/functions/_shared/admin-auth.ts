@@ -13,7 +13,7 @@ function cookieValue(request: Request, name: string): string | undefined {
   return source.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
 }
 
-export async function createAdminSession(passcode: string): Promise<{ token: string; csrfToken: string; expiresAt: Date }> {
+export async function createAdminSession(passcode: string, ipAddress: string): Promise<{ token: string; csrfToken: string; expiresAt: Date }> {
   const configuredHash = requiredEnv("ADMIN_PASSCODE_HASH");
   if (!(await bcrypt.compare(passcode, configuredHash))) throw new HttpError(401, "The staff passcode is not correct.");
   const token = randomToken();
@@ -21,7 +21,7 @@ export async function createAdminSession(passcode: string): Promise<{ token: str
   const expiresAt = new Date(Date.now() + 8 * 3_600_000);
   const db = getDb();
   await db.insert(adminSessions).values({ tokenHash: secretHash(token), csrfTokenHash: secretHash(csrfToken), expiresAt });
-  await db.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "admin_login", entityType: "session" });
+  await db.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "admin_login", entityType: "session" });
   return { token, csrfToken, expiresAt };
 }
 

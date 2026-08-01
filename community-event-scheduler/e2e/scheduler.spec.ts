@@ -98,7 +98,7 @@ test("manage page edits details without changing the schedule and supports cance
 });
 
 test("staff login and dashboard tabs meet keyboard and hourly-input contracts", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "chromium-desktop", "representative staff workflow test");
+  test.skip(!["chromium-desktop", "chromium-mobile"].includes(testInfo.project.name), "representative staff workflow test");
   await page.goto("/admin", { waitUntil: "domcontentloaded" });
   const loginAxe = await new AxeBuilder({ page }).analyze();
   expect(loginAxe.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
@@ -107,7 +107,10 @@ test("staff login and dashboard tabs meet keyboard and hourly-input contracts", 
   await page.route("**/api/admin/bookings", (route) => route.fulfill({ json: { bookings: [] } }));
   await page.route("**/api/admin/hours", (route) => route.fulfill({ json: { hours: Array.from({ length: 7 }, (_, index) => ({ id: String(index + 1), dayOfWeek: index + 1, opensAt: "09:00", closesAt: "21:00", isClosed: false })) } }));
   await page.route("**/api/admin/blackouts", (route) => route.fulfill({ json: { blackouts: [] } }));
-  await page.route("**/api/admin/audit", (route) => route.fulfill({ json: { audit: [] } }));
+  await page.route("**/api/admin/audit", (route) => route.fulfill({ json: { audit: [
+    { id: "audit-ipv6", action: "booking_confirmed", entityType: "booking", actorLabel: null, ipAddress: "2001:0db8:85a3:0000:0000:8a2e:0370:7334", createdAt: "2026-08-01T18:00:00.000Z" },
+    { id: "audit-historical", action: "booking_started", entityType: "booking", actorLabel: null, ipAddress: null, createdAt: "2026-07-31T18:00:00.000Z" },
+  ] } }));
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.getByRole("tab", { name: "bookings" })).toBeVisible();
   await page.getByRole("tab", { name: "bookings" }).focus();
@@ -118,6 +121,11 @@ test("staff login and dashboard tabs meet keyboard and hourly-input contracts", 
   await page.getByRole("tab", { name: "blackouts" }).click();
   await expect(page.locator('input[type="datetime-local"]')).toHaveCount(0);
   await expect(page.getByRole("tabpanel", { name: "blackouts" }).getByLabel("Start time").locator("option")).toHaveCount(24);
+  await page.getByRole("tab", { name: "audit" }).click();
+  await expect(page.getByRole("columnheader", { name: "IP address" })).toBeVisible();
+  await expect(page.getByText("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toBeVisible();
+  await expect(page.getByText("Not recorded")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 
 test("schedule failure is announced and remains recoverable", async ({ page }, testInfo) => {

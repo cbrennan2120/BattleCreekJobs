@@ -1,4 +1,4 @@
-import type { Config } from "@netlify/functions";
+import type { Config, Context } from "@netlify/functions";
 import { asc, eq, gt } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { getDb } from "../../db";
@@ -9,7 +9,7 @@ import { handleError, json, methodNotAllowed, readJson } from "./_shared/http";
 import { hoursSchema } from "./_shared/validation";
 import { STORE_TIMEZONE } from "./_shared/scheduling";
 
-export default async (request: Request) => {
+export default async (request: Request, context: Context) => {
   try {
     if (request.method === "GET") {
       await requireAdmin(request);
@@ -35,7 +35,7 @@ export default async (request: Request) => {
         for (const row of input.hours) {
           await tx.update(weeklyHours).set({ opensAt: row.opensAt, closesAt: row.closesAt, isClosed: row.isClosed, updatedAt: new Date() }).where(eq(weeklyHours.id, row.id));
         }
-        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "weekly_hours_updated", entityType: "settings" });
+        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress: context.ip, action: "weekly_hours_updated", entityType: "settings" });
       });
       return json({ hours: await db.select().from(weeklyHours).orderBy(asc(weeklyHours.dayOfWeek)) });
     }

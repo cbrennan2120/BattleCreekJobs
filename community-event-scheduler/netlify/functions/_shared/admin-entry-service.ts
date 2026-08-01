@@ -95,7 +95,7 @@ export async function previewManualEntry(draft: ManualEntryDraft, options: Previ
   return { ready, skipped };
 }
 
-async function createOne(draft: ManualEntryDraft, item: EntryOccurrenceResult, seriesId: string | null): Promise<EntryOccurrenceResult> {
+async function createOne(draft: ManualEntryDraft, item: EntryOccurrenceResult, seriesId: string | null, ipAddress: string): Promise<EntryOccurrenceResult> {
   if (!item.start || !item.end) throw new HttpError(500, "Occurrence is missing its time range.");
   const db = getDb();
   const start = new Date(item.start);
@@ -131,7 +131,7 @@ async function createOne(draft: ManualEntryDraft, item: EntryOccurrenceResult, s
           confirmedAt: now,
         }).returning({ id: bookings.id });
         await tx.insert(bookingSlots).values(slotStarts(start, end).map((slotStart) => ({ bookingId: row.id, resourceId: RESOURCE_ID, slotStart })));
-        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "manual_event_created", entityType: "booking", entityId: row.id, metadata: { seriesId, occurrenceKey: item.occurrenceKey } });
+        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "manual_event_created", entityType: "booking", entityId: row.id, metadata: { seriesId, occurrenceKey: item.occurrenceKey } });
         return { ...item, id: row.id };
       }
 
@@ -143,7 +143,7 @@ async function createOne(draft: ManualEntryDraft, item: EntryOccurrenceResult, s
         occurrenceKey: item.occurrenceKey,
       }).returning({ id: blackoutPeriods.id });
       await tx.insert(bookingSlots).values(slotStarts(start, end).map((slotStart) => ({ blackoutId: row.id, resourceId: RESOURCE_ID, slotStart })));
-      await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "store_hold_created", entityType: "blackout", entityId: row.id, metadata: { seriesId, occurrenceKey: item.occurrenceKey } });
+      await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "store_hold_created", entityType: "blackout", entityId: row.id, metadata: { seriesId, occurrenceKey: item.occurrenceKey } });
       return { ...item, id: row.id };
     });
   } catch (error) {
@@ -153,7 +153,7 @@ async function createOne(draft: ManualEntryDraft, item: EntryOccurrenceResult, s
   }
 }
 
-export async function createManualEntry(draft: ManualEntryDraft): Promise<{ seriesId: string | null; created: EntryOccurrenceResult[]; skipped: EntryOccurrenceResult[] }> {
+export async function createManualEntry(draft: ManualEntryDraft, ipAddress: string): Promise<{ seriesId: string | null; created: EntryOccurrenceResult[]; skipped: EntryOccurrenceResult[] }> {
   const preview = await previewManualEntry(draft);
   if (!preview.ready.length) return { seriesId: null, created: [], skipped: preview.skipped };
   const db = getDb();
@@ -174,7 +174,7 @@ export async function createManualEntry(draft: ManualEntryDraft): Promise<{ seri
   const skipped = [...preview.skipped];
   for (const item of preview.ready) {
     try {
-      created.push(await createOne(draft, item, seriesId));
+      created.push(await createOne(draft, item, seriesId, ipAddress));
     } catch (error) {
       skipped.push({ ...item, reason: error instanceof Error ? error.message : "This occurrence could not be created." });
     }

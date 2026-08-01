@@ -52,7 +52,7 @@ function detailsForEmail(draft: ManualEntryDraft) {
     : null;
 }
 
-async function patchEntries(id: string, scope: Scope, draft: ManualEntryDraft) {
+async function patchEntries(id: string, scope: Scope, draft: ManualEntryDraft, ipAddress: string) {
   const target = await findTarget(id);
   if (target.entryType !== draft.entryType) throw new HttpError(400, "Editing cannot change an event into a hold or a hold into an event.");
   const selected = await selectedIds(target, scope);
@@ -82,7 +82,7 @@ async function patchEntries(id: string, scope: Scope, draft: ManualEntryDraft) {
           await tx.update(blackoutPeriods).set({ startsAt: start, endsAt: end, reason: draft.hold.reason, isException: true }).where(eq(blackoutPeriods.id, target.row.id));
           await tx.insert(bookingSlots).values(slotStarts(start, end).map((slotStart) => ({ blackoutId: target.row.id, resourceId: RESOURCE_ID, slotStart })));
         }
-        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "manual_entry_exception_updated", entityType: target.entryType, entityId: target.row.id, metadata: { scope } });
+        await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "manual_entry_exception_updated", entityType: target.entryType, entityId: target.row.id, metadata: { scope } });
         return [{ ...item, id: target.row.id }];
       }
 
@@ -120,7 +120,7 @@ async function patchEntries(id: string, scope: Scope, draft: ManualEntryDraft) {
           result.push({ ...item, id: row.id });
         }
       }
-      await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "manual_series_updated", entityType: draft.entryType, entityId: newSeriesId, metadata: { scope, replacedSeriesId: target.row.seriesId } });
+      await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "manual_series_updated", entityType: draft.entryType, entityId: newSeriesId, metadata: { scope, replacedSeriesId: target.row.seriesId } });
       return result;
     });
     return { changed, skipped: preview.skipped, unchanged: 0 };
@@ -131,7 +131,7 @@ async function patchEntries(id: string, scope: Scope, draft: ManualEntryDraft) {
   }
 }
 
-async function deleteEntries(id: string, scope: Scope) {
+async function deleteEntries(id: string, scope: Scope, ipAddress: string) {
   const target = await findTarget(id);
   const selected = await selectedIds(target, scope);
   const db = getDb();
@@ -153,7 +153,7 @@ async function deleteEntries(id: string, scope: Scope) {
       await tx.delete(blackoutPeriods).where(inArray(blackoutPeriods.id, selected.blackoutIds));
     }
     if (target.row.seriesId && scope !== "occurrence") await tx.update(recurrenceSeries).set({ status: scope === "following" ? "split" : "cancelled", updatedAt: new Date() }).where(eq(recurrenceSeries.id, target.row.seriesId));
-    await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "manual_entry_removed", entityType: target.entryType, entityId: id, metadata: { scope, count: selected.bookingIds.length + selected.blackoutIds.length } });
+    await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress, action: "manual_entry_removed", entityType: target.entryType, entityId: id, metadata: { scope, count: selected.bookingIds.length + selected.blackoutIds.length } });
   });
   return {
     removed: selected.bookingIds.length + selected.blackoutIds.length,
@@ -169,7 +169,7 @@ export default async (request: Request, context: Context) => {
     if (!id) throw new HttpError(400, "Entry ID is required.");
     if (request.method === "PATCH") {
       const input = manualEntryUpdateSchema.parse(await readJson(request));
-      const result = await patchEntries(id, input.scope, input.draft);
+      const result = await patchEntries(id, input.scope, input.draft, context.ip);
       const mail = detailsForEmail(input.draft);
       if (mail && result.changed.length) await sendManualEntrySummary({ ...mail, action: "updated", dates: result.changed.map((item) => `${item.date} at ${item.time}`), skipped: result.skipped.length }).catch(console.error);
       return json(result);
@@ -177,7 +177,7 @@ export default async (request: Request, context: Context) => {
     if (request.method === "DELETE") {
       const scope = new URL(request.url).searchParams.get("scope") ?? "occurrence";
       if (!(["occurrence", "following", "series"] as string[]).includes(scope)) throw new HttpError(400, "Choose a valid removal scope.");
-      const result = await deleteEntries(id, scope as Scope);
+      const result = await deleteEntries(id, scope as Scope, context.ip);
       if (result.notification) await sendManualEntrySummary({ ...result.notification, action: "cancelled", dates: [`${result.removed} scheduled date${result.removed === 1 ? "" : "s"}`] }).catch(console.error);
       return json({ removed: result.removed, changed: result.changed, skipped: [] });
     }
