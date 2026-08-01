@@ -57,7 +57,7 @@ const recurrenceEndSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("count"), count: z.number().int().min(1).max(200) }),
 ]);
 
-export const recurrenceRuleSchema = z.discriminatedUnion("frequency", [
+export const recurrenceRuleSchema = z.union([
   z.object({ frequency: z.literal("none") }),
   z.object({ frequency: z.literal("daily"), interval: z.number().int().min(1).max(30), end: recurrenceEndSchema }),
   z.object({

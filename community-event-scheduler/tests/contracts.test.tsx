@@ -6,6 +6,7 @@ import App from "../src/App";
 import { addHoursToStoreInput, bookingInputBounds, fromStoreLocalInput, startOfWeek } from "../src/date";
 import { collapseOccupiedSlots, consecutiveAvailableHours } from "../src/pages/SchedulePage";
 import type { PublicSlot } from "../src/types";
+import { manualEntrySchema } from "../netlify/functions/_shared/validation";
 
 describe("database concurrency contract", () => {
   it("enforces one resource claim per hourly start", () => {
@@ -76,5 +77,14 @@ describe("public shell", () => {
     expect(bookingForm).toContain("onExpire={() => {");
     expect(bookingForm).toContain("onError={() => {");
     expect(bookingForm).toContain("busy || Boolean(siteKey && !form.turnstileToken)");
+  });
+});
+
+describe("staff entry validation", () => {
+  it("accepts non-repeating, weekly, and monthly recurrence rules under Zod 4", () => {
+    const base = { entryType: "event" as const, event: { groupName: "Adoption Event", category: "Rescue Organization" as const }, startDate: "2026-08-07", startTime: "14:00", durationMinutes: 240 };
+    expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "none" } }).recurrence.frequency).toBe("none");
+    expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "weekly", interval: 1, weekdays: [5], end: { type: "count", count: 4 } } }).recurrence.frequency).toBe("weekly");
+    expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "monthly", interval: 1, mode: "day_of_month", dayOfMonth: 7, end: { type: "count", count: 2 } } }).recurrence.frequency).toBe("monthly");
   });
 });
