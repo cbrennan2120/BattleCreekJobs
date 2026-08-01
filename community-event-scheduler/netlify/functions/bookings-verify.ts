@@ -1,4 +1,4 @@
-import type { Config } from "@netlify/functions";
+import type { Config, Context } from "@netlify/functions";
 import { and, eq } from "drizzle-orm";
 import { DateTime } from "luxon";
 import { getDb } from "../../db";
@@ -11,11 +11,12 @@ import { enforceRateLimit, randomToken, safeHashMatch, secretHash } from "./_sha
 import { STORE_TIMEZONE } from "./_shared/scheduling";
 import { verificationSchema } from "./_shared/validation";
 
-export default async (request: Request) => {
+export default async (request: Request, context: Context) => {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
   try {
-    const input = verificationSchema.parse(await readJson(request));
-    await enforceRateLimit("booking_verify", input.challengeId, 8, 15);
+    const input = verificationSchema.parse(await readJson(request, 1024));
+    await enforceRateLimit("booking_verify_ip", context.ip, 30, 15);
+    await enforceRateLimit("booking_verify_challenge", input.challengeId, 8, 15);
     const db = getDb();
     const [challenge] = await db.select().from(verificationChallenges).where(eq(verificationChallenges.id, input.challengeId)).limit(1);
     if (!challenge) throw new HttpError(404, "That verification request was not found.");
@@ -42,7 +43,7 @@ export default async (request: Request) => {
       const [confirmed] = await tx.update(bookings).set({ status: "confirmed", confirmedAt, expiresAt: null, manageTokenHash: secretHash(finalToken), updatedAt: confirmedAt })
         .where(and(eq(bookings.id, booking.id), eq(bookings.status, "pending_verification"))).returning({ id: bookings.id });
       if (!confirmed) throw new HttpError(409, "This reservation was already verified.");
-      await tx.insert(auditLog).values({ actorType: "public", action: "booking_confirmed", entityType: "booking", entityId: booking.id, metadata: { category: booking.category } });
+      await tx.insert(auditLog).values({ actorType: "public", ipAddress: context.ip, action: "booking_confirmed", entityType: "booking", entityId: booking.id, metadata: { category: booking.category } });
     });
 
     const baseUrl = env("URL") || new URL(request.url).origin;
@@ -62,4 +63,7 @@ export default async (request: Request) => {
   } catch (error) { return handleError(error); }
 };
 
-export const config: Config = { path: "/api/bookings/verify" };
+export const config: Config = {
+  path: "/api/bookings/verify",
+  rateLimit: { action: "rate_limit", aggregateBy: ["ip", "domain"], windowLimit: 20, windowSize: 60 },
+};

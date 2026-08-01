@@ -24,8 +24,15 @@ export function handleError(error: unknown): Response {
   return json({ error: "We could not complete that request. Please try again." }, { status: 500 });
 }
 
-export async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Request, maxBytes?: number): Promise<unknown> {
   const type = request.headers.get("content-type") || "";
   if (!type.includes("application/json")) throw new HttpError(415, "This endpoint accepts JSON only.");
-  try { return await request.json(); } catch { throw new HttpError(400, "The request body is not valid JSON."); }
+  if (maxBytes === undefined) {
+    try { return await request.json(); } catch { throw new HttpError(400, "The request body is not valid JSON."); }
+  }
+  const declaredLength = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) throw new HttpError(413, "The request body is too large.");
+  const source = await request.text();
+  if (new TextEncoder().encode(source).byteLength > maxBytes) throw new HttpError(413, "The request body is too large.");
+  try { return JSON.parse(source); } catch { throw new HttpError(400, "The request body is not valid JSON."); }
 }

@@ -22,8 +22,13 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const fallback = response.status === 429
+      ? "Too many attempts. Please wait and try again."
+      : response.status === 413
+        ? "That request is too large. Refresh the page and try again."
+        : "Something went wrong. Please try again.";
     throw new ApiError(
-      typeof payload.error === "string" ? payload.error : "Something went wrong. Please try again.",
+      typeof payload.error === "string" ? payload.error : fallback,
       response.status,
       payload.details,
     );

@@ -51,7 +51,7 @@ export default async (request: Request, context: Context) => {
         }).returning({ id: bookings.id });
         await tx.insert(bookingSlots).values(window.slots.map((slotStart) => ({ bookingId: booking.id, resourceId: RESOURCE_ID, slotStart })));
         const [challenge] = await tx.insert(verificationChallenges).values({ bookingId: booking.id, codeHash: secretHash(code), expiresAt }).returning({ id: verificationChallenges.id });
-        await tx.insert(auditLog).values({ actorType: "public", action: "booking_started", entityType: "booking", entityId: booking.id, metadata: { category: input.category } });
+        await tx.insert(auditLog).values({ actorType: "public", ipAddress: context.ip, action: "booking_started", entityType: "booking", entityId: booking.id, metadata: { category: input.category } });
         return { booking, challenge };
       });
       bookingId = result.booking.id;

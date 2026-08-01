@@ -23,7 +23,7 @@ export const bookingInputSchema = z.object({
 export const verificationSchema = z.object({
   challengeId: z.string().uuid(),
   code: z.string().regex(/^\d{6}$/),
-});
+}).strict();
 
 export const rescheduleSchema = z.object({
   action: z.literal("reschedule"),

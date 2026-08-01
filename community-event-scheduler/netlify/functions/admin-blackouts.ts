@@ -33,7 +33,7 @@ export default async (request: Request, context: Context) => {
           if (conflict) throw new HttpError(409, `This blackout overlaps ${conflict.groupName}. Move or cancel that booking first.`);
           const [created] = await tx.insert(blackoutPeriods).values({ startsAt, endsAt, reason: input.reason }).returning();
           await tx.insert(bookingSlots).values(slotStarts(startsAt, endsAt).map((slotStart) => ({ blackoutId: created.id, resourceId: RESOURCE_ID, slotStart })));
-          await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "blackout_created", entityType: "blackout", entityId: created.id, metadata: { reason: created.reason } });
+          await tx.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress: context.ip, action: "blackout_created", entityType: "blackout", entityId: created.id, metadata: { reason: created.reason } });
           return created;
         });
         return json({ blackout: row }, { status: 201 });
@@ -48,7 +48,7 @@ export default async (request: Request, context: Context) => {
       const db = getDb();
       const [row] = await db.delete(blackoutPeriods).where(eq(blackoutPeriods.id, id)).returning();
       if (!row) throw new HttpError(404, "Blackout not found.");
-      await db.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", action: "blackout_deleted", entityType: "blackout", entityId: id });
+      await db.insert(auditLog).values({ actorType: "admin", actorLabel: "Shared staff", ipAddress: context.ip, action: "blackout_deleted", entityType: "blackout", entityId: id });
       return json({ ok: true });
     }
     return methodNotAllowed(["GET", "POST", "DELETE"]);
