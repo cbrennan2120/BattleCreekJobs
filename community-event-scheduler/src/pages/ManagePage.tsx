@@ -4,10 +4,11 @@ import { addHoursToStoreInput, bookingInputBounds, formatDay, formatTime, fromSt
 import AccessibleDialog from "../components/AccessibleDialog";
 import { DateHourFields } from "../components/HourFields";
 import FormError from "../components/FormError";
+import { CATEGORIES, type Category } from "../types";
 
 interface ManagedBooking {
   groupName: string;
-  category: string;
+  category: Category;
   contactName: string;
   email: string;
   phone?: string | null;
@@ -17,8 +18,25 @@ interface ManagedBooking {
   end: string;
 }
 
+interface EditableDetails {
+  groupName: string;
+  category: Category;
+  contactName: string;
+  phone: string;
+  privateNotes: string;
+}
+
+const emptyDetails: EditableDetails = {
+  groupName: "",
+  category: "Community Event",
+  contactName: "",
+  phone: "",
+  privateNotes: "",
+};
+
 export default function ManagePage({ token }: { token: string }) {
   const [booking, setBooking] = useState<ManagedBooking | null>(null);
+  const [details, setDetails] = useState<EditableDetails>(emptyDetails);
   const [start, setStart] = useState("");
   const [durationHours, setDurationHours] = useState(1);
   const [error, setError] = useState("");
@@ -31,6 +49,13 @@ export default function ManagePage({ token }: { token: string }) {
     try {
       const result = await api<ManagedBooking>(`/api/manage/${token}`);
       setBooking(result);
+      setDetails({
+        groupName: result.groupName,
+        category: result.category,
+        contactName: result.contactName,
+        phone: result.phone ?? "",
+        privateNotes: result.privateNotes ?? "",
+      });
       setStart(toLocalInput(result.start));
       setDurationHours(Math.max(1, Math.min(4, Math.round(hoursBetween(result.start, result.end)))));
     } catch (caught) {
@@ -39,6 +64,43 @@ export default function ManagePage({ token }: { token: string }) {
   };
 
   useEffect(() => { void load(); }, [token]);
+
+  const updateDetail = (key: keyof EditableDetails, value: string) => {
+    setDetails((current) => ({ ...current, [key]: value }));
+  };
+
+  const saveDetails = async (event: FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await api<ManagedBooking>(`/api/manage/${token}`, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "update_details",
+          groupName: details.groupName,
+          category: details.category,
+          contactName: details.contactName,
+          phone: details.phone || undefined,
+          privateNotes: details.privateNotes || undefined,
+        }),
+      });
+      setBooking(result);
+      setDetails({
+        groupName: result.groupName,
+        category: result.category,
+        contactName: result.contactName,
+        phone: result.phone ?? "",
+        privateNotes: result.privateNotes ?? "",
+      });
+      setNotice("Your reservation details have been updated.");
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Those reservation details could not be saved.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const act = async (action: "cancel" | "reschedule", event?: FormEvent) => {
     event?.preventDefault();
@@ -83,6 +145,42 @@ export default function ManagePage({ token }: { token: string }) {
           </dl>
           {booking.status === "confirmed" && (
             <>
+              <form className="booking-form manage-details-form" onSubmit={saveDetails}>
+                <div className="field-span">
+                  <h3>Edit reservation details</h3>
+                  <p className="form-intro">Update the public event information or the private contact details store staff use.</p>
+                </div>
+                <div className="field-span">
+                  <label htmlFor="manage-group-name">Group or event name</label>
+                  <input id="manage-group-name" value={details.groupName} onChange={(event) => updateDetail("groupName", event.target.value)} minLength={2} maxLength={100} required />
+                </div>
+                <div className="field-span">
+                  <label htmlFor="manage-category">Event category</label>
+                  <select id="manage-category" value={details.category} onChange={(event) => updateDetail("category", event.target.value as Category)}>
+                    {CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="manage-contact-name">Contact name</label>
+                  <input id="manage-contact-name" autoComplete="name" value={details.contactName} onChange={(event) => updateDetail("contactName", event.target.value)} minLength={2} maxLength={100} required />
+                </div>
+                <div>
+                  <label htmlFor="manage-email">Verified email</label>
+                  <input id="manage-email" type="email" value={booking.email} readOnly aria-describedby="manage-email-help" />
+                  <span id="manage-email-help" className="field-help">To change this address, contact the store.</span>
+                </div>
+                <div className="field-span">
+                  <label htmlFor="manage-phone">Phone <span>(optional)</span></label>
+                  <input id="manage-phone" type="tel" autoComplete="tel" value={details.phone} onChange={(event) => updateDetail("phone", event.target.value)} maxLength={30} />
+                </div>
+                <div className="field-span">
+                  <label htmlFor="manage-notes">Notes for store staff <span>(optional and private)</span></label>
+                  <textarea id="manage-notes" value={details.privateNotes} onChange={(event) => updateDetail("privateNotes", event.target.value)} maxLength={1000} rows={3} />
+                </div>
+                <div className="dialog-actions field-span">
+                  <button className="button primary" disabled={busy}>{busy ? "Saving…" : "Save reservation details"}</button>
+                </div>
+              </form>
               <form className="reschedule-form" onSubmit={(event) => void act("reschedule", event)}>
                 <h3>Choose another time</h3>
                 <DateHourFields idPrefix="manage-start" value={start} min={bounds.min} max={bounds.max} onChange={setStart} />

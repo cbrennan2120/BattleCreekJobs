@@ -31,9 +31,18 @@ export const rescheduleSchema = z.object({
   end: z.string().datetime({ offset: true }),
 });
 
+export const manageDetailsSchema = bookingInputSchema.pick({
+  groupName: true,
+  category: true,
+  contactName: true,
+  phone: true,
+  privateNotes: true,
+}).extend({ action: z.literal("update_details") }).strict();
+
 export const manageActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("cancel") }),
   rescheduleSchema,
+  manageDetailsSchema,
 ]);
 
 export const hoursSchema = z.object({

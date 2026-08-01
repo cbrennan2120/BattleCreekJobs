@@ -47,6 +47,46 @@ export default async (request: Request, context: Context) => {
       return json(ownerView({ ...booking, status: "cancelled", cancelledAt: now, updatedAt: now }));
     }
 
+    if (input.action === "update_details") {
+      const details = {
+        groupName: input.groupName,
+        category: input.category,
+        contactName: input.contactName,
+        phone: input.phone ?? null,
+        privateNotes: input.privateNotes ?? null,
+        updatedAt: now,
+      };
+      const changedFields = [
+        booking.groupName !== details.groupName && "event name",
+        booking.category !== details.category && "category",
+        booking.contactName !== details.contactName && "contact name",
+        (booking.phone ?? null) !== details.phone && "phone",
+        (booking.privateNotes ?? null) !== details.privateNotes && "private notes",
+      ].filter((field): field is string => Boolean(field));
+      let updated: typeof bookings.$inferSelect | undefined;
+      await db.transaction(async (tx) => {
+        [updated] = await tx.update(bookings).set(details)
+          .where(and(eq(bookings.id, booking.id), eq(bookings.status, "confirmed")))
+          .returning();
+        if (!updated) throw new HttpError(409, "Only a confirmed reservation can be changed.");
+        await tx.insert(auditLog).values({
+          actorType: "booker",
+          action: "booking_details_updated",
+          entityType: "booking",
+          entityId: booking.id,
+          metadata: { fields: changedFields },
+        });
+      });
+      if (!updated) throw new HttpError(409, "Only a confirmed reservation can be changed.");
+      if (booking.email) {
+        const summary = changedFields.length
+          ? `The following reservation details were updated: ${changedFields.join(", ")}.`
+          : "Your reservation details were reviewed and saved without changes.";
+        await sendChanged(booking.email, updated.groupName, summary).catch(console.error);
+      }
+      return json(ownerView(updated));
+    }
+
     const start = new Date(input.start);
     const end = new Date(input.end);
     const [hours, blackouts] = await Promise.all([

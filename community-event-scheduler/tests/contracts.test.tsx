@@ -6,7 +6,7 @@ import App from "../src/App";
 import { addHoursToStoreInput, bookingInputBounds, fromStoreLocalInput, startOfWeek } from "../src/date";
 import { collapseOccupiedSlots, consecutiveAvailableHours } from "../src/pages/SchedulePage";
 import type { PublicSlot } from "../src/types";
-import { manualEntrySchema } from "../netlify/functions/_shared/validation";
+import { manageActionSchema, manualEntrySchema } from "../netlify/functions/_shared/validation";
 
 describe("database concurrency contract", () => {
   it("enforces one resource claim per hourly start", () => {
@@ -87,5 +87,35 @@ describe("staff entry validation", () => {
     expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "none" } }).recurrence.frequency).toBe("none");
     expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "weekly", interval: 1, weekdays: [5], end: { type: "count", count: 4 } } }).recurrence.frequency).toBe("weekly");
     expect(manualEntrySchema.parse({ ...base, recurrence: { frequency: "monthly", interval: 1, mode: "day_of_month", dayOfMonth: 7, end: { type: "count", count: 2 } } }).recurrence.frequency).toBe("monthly");
+  });
+});
+
+describe("customer reservation editing contract", () => {
+  const details = {
+    action: "update_details" as const,
+    groupName: "  Tomorrow's Tails  ",
+    category: "Rescue Organization" as const,
+    contactName: "  Test User  ",
+    phone: " 269-555-0100 ",
+    privateNotes: "  Please call on arrival. ",
+  };
+
+  it("normalizes editable details and permits clearing optional fields", () => {
+    expect(manageActionSchema.parse(details)).toEqual({
+      ...details,
+      groupName: "Tomorrow's Tails",
+      contactName: "Test User",
+      phone: "269-555-0100",
+      privateNotes: "Please call on arrival.",
+    });
+    expect(manageActionSchema.parse({ ...details, phone: "", privateNotes: "" })).toMatchObject({ phone: undefined, privateNotes: undefined });
+  });
+
+  it("rejects invalid details and attempts to change locked or scheduling fields", () => {
+    expect(manageActionSchema.safeParse({ ...details, category: "Not a category" }).success).toBe(false);
+    expect(manageActionSchema.safeParse({ ...details, groupName: "x" }).success).toBe(false);
+    expect(manageActionSchema.safeParse({ ...details, privateNotes: "x".repeat(1001) }).success).toBe(false);
+    expect(manageActionSchema.safeParse({ ...details, email: "replacement@example.com" }).success).toBe(false);
+    expect(manageActionSchema.safeParse({ ...details, start: "2026-08-09T18:00:00.000Z" }).success).toBe(false);
   });
 });
