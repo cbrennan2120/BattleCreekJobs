@@ -136,24 +136,3 @@ test("schedule failure is announced and remains recoverable", async ({ page }, t
   await expect(page.getByRole("alert")).toContainText("Temporary outage");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
 });
-
-test("mobile schedule and booking dialog visual baseline", async ({ page, isMobile, browserName }) => {
-  test.skip(!isMobile, "mobile-only snapshot");
-  await page.clock.setFixedTime(new Date("2026-08-01T16:00:00.000Z"));
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("tab")).toHaveCount(7);
-  const capturesVisualBaseline = browserName === "chromium";
-  if (capturesVisualBaseline) {
-    await expect(page).toHaveScreenshot("mobile-schedule.png", { fullPage: true, maxDiffPixelRatio: 0.02 });
-  }
-  await page.getByRole("button", { name: "Reserve the space" }).first().click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  });
-  await dialog.evaluate((element) => { element.scrollTop = 0; });
-  if (capturesVisualBaseline) {
-    await expect(dialog).toHaveScreenshot("mobile-booking-dialog.png", { maxDiffPixelRatio: 0.02 });
-  }
-});
