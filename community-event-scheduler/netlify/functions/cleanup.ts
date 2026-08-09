@@ -7,4 +7,4 @@ export default async () => {
   return new Response(null, { status: 204 });
 };
 
-export const config: Config = { schedule: "0 * * * *" };
+export const config: Config = { schedule: "*/5 * * * *" };
