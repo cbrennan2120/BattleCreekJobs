@@ -110,7 +110,7 @@ export default function BookingForm({ initialStart, maxDurationHours = 4, onClos
         <button className="dialog-close" onClick={onClose} aria-label="Close">×</button>
         <span className="success-mark" aria-hidden="true">✓</span>
         <h2 id="confirmed-title">You’re booked!</h2>
-        <p>We sent the details to your email. Keep your private link if you need to cancel or choose another time.</p>
+        <p>We sent you a confirmation email. Keep that email—it contains your private “Manage reservation” button for changing or cancelling your event.</p>
         <a className="button primary" href={confirmed.manageUrl}>Manage this reservation</a>
       </AccessibleDialog>
     );

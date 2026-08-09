@@ -72,6 +72,29 @@ describe("public shell", () => {
     expect(html).toContain("Personal contact information is visible only to store staff");
   });
 
+  it("explains the verification code and private management button in order", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
+    const html = renderToStaticMarkup(<App />);
+    const steps = [
+      "Pick a time",
+      "Tell us about your event",
+      "Confirm by email",
+      "Keep your confirmation email",
+    ];
+    const positions = steps.map((step) => html.indexOf(step));
+    expect(positions.every((position) => position >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((left, right) => left - right));
+    expect(html).toContain("Enter the six-digit code we send you.");
+    expect(html).toContain("Manage reservation");
+
+    const bookingForm = readFileSync(join(process.cwd(), "src", "components", "BookingForm.tsx"), "utf8");
+    expect(bookingForm).toContain("Keep that email—it contains your private “Manage reservation” button");
+    expect(bookingForm).toContain('href={confirmed.manageUrl}>Manage this reservation</a>');
+
+    const mailer = readFileSync(join(process.cwd(), "netlify", "functions", "_shared", "mailer.ts"), "utf8");
+    expect(mailer).toContain("Keep this email. Use the private “Manage reservation” button to change event details, choose another time, or cancel.");
+  });
+
   it("interprets visitor-entered wall time in the Battle Creek timezone", () => {
     expect(fromStoreLocalInput("2026-08-10T09:00")).toBe("2026-08-10T13:00:00.000Z");
     expect(fromStoreLocalInput("2026-12-10T09:00")).toBe("2026-12-10T14:00:00.000Z");

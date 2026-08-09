@@ -126,8 +126,9 @@ export default function SchedulePage() {
           <h2>Simple from start to finish</h2>
           <ol>
             <li><span>1</span><div><strong>Pick a time</strong><small>Choose up to four hours.</small></div></li>
-            <li><span>2</span><div><strong>Share the basics</strong><small>Your contact details stay private.</small></div></li>
-            <li><span>3</span><div><strong>Check your email</strong><small>One code confirms your reservation.</small></div></li>
+            <li><span>2</span><div><strong>Tell us about your event</strong><small>Your contact information stays private.</small></div></li>
+            <li><span>3</span><div><strong>Confirm by email</strong><small>Enter the six-digit code we send you.</small></div></li>
+            <li><span>4</span><div><strong>Keep your confirmation email</strong><small>Use its “Manage reservation” button to make changes or cancel.</small></div></li>
           </ol>
         </aside>
       </section>
