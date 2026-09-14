@@ -1,0 +1,115 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #111;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: #111;
+}
+
+.orientation-viewer {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+
+.slide-stage {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.slide-stage img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.slide-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.slide-navigation button {
+  min-width: 160px;
+  min-height: 58px;
+  padding: 12px 28px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: #00b74f;
+  color: #fff;
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.slide-navigation button:focus-visible {
+  outline: 4px solid #fff;
+  outline-offset: 3px;
+}
+
+.slide-navigation button:disabled {
+  border-color: #777;
+  background: #444;
+  color: #aaa;
+  cursor: default;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .orientation-viewer {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .slide-navigation {
+    gap: 8px;
+  }
+
+  .slide-navigation button {
+    min-width: 0;
+    min-height: 52px;
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 1.1rem;
+  }
+}
