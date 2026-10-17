@@ -646,6 +646,9 @@ a {
   background: white;
   padding: 14px 15px;
   color: var(--text);
+  font-family: Calibri, "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .field textarea {
@@ -837,7 +840,8 @@ a {
   display: block;
   font-size: 1.15rem;
   color: var(--green-deep);
-  font-family: "Verb Black", "Arial Black", sans-serif;
+  font-family: "Foco", "Arial Black", "Segoe UI Black", sans-serif;
+  font-weight: 700;
 }
 
 .reality-item p {

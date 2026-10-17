@@ -323,17 +323,17 @@ function renderBasicStep() {
         <label for="phone">Mobile phone</label>
         <input id="phone" name="phone" value="${escapeHtml(formState.phone)}" required>
       </div>
-      <div class="field">
-        <label for="city">City</label>
-        <input id="city" name="city" value="${escapeHtml(formState.city)}" required>
+      <div class="field" style="grid-column: 1 / -1;">
+        <label for="city">City / Hometown</label>
+        <input id="city" name="city" placeholder="e.g. Battle Creek, Springfield, Portage" value="${escapeHtml(formState.city)}" required>
       </div>
-      <div class="field">
-        <label for="position">Position of interest</label>
-        <select id="position" name="position">
-          ${renderOptions(["Stock Team Member", "Cashier Team Member"], formState.position)}
-        </select>
-        <div class="helper-banner role-helper">${renderRoleSummary(formState.position)}</div>
-      </div>
+    </div>
+    <div class="field" style="margin-top: 14px;">
+      <label for="position">Position of interest</label>
+      <select id="position" name="position">
+        ${renderOptions(["Stock Team Member", "Cashier Team Member"], formState.position)}
+      </select>
+      <div class="helper-banner role-helper" style="margin-top: 8px;">${renderRoleSummary(formState.position)}</div>
     </div>
     <div class="step-section">
       <div class="section-callout">
@@ -793,8 +793,9 @@ async function submitApplication() {
   };
 
   await submitLiveApplication(applicant);
+  const submittedId = applicant.id;
   resetForm(false);
-  showSubmissionBanner();
+  showSubmissionBanner(submittedId);
   document.getElementById("application")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1369,7 +1370,7 @@ function printCandidateScorecard(candidate) {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #00AF41; padding-bottom: 10px;">
           <div>
             <h1 style="margin: 0; font-size: 18pt; color: #00AF41; font-weight: 800;">PET SUPPLIES PLUS &bull; BATTLE CREEK</h1>
-            <p style="margin: 2px 0 0; font-size: 10pt; color: #444;">Store #0212 &bull; 1791 W. Columbia Ave &bull; (269) 963-7387</p>
+            <p style="margin: 2px 0 0; font-size: 10pt; color: #444;">Store #0212 &bull; 1791 W. Columbia Ave &bull; (269) 964-9252</p>
           </div>
           <div style="text-align: right;">
             <strong style="font-size: 12pt; display: block;">Interview Evaluation Scorecard</strong>
@@ -1662,14 +1663,33 @@ function resetForm(showAlert) {
   if (showAlert) window.alert("Application form reset.");
 }
 
-function showSubmissionBanner() {
-  if (!submissionBanner) return;
-  submissionBanner.hidden = false;
+function showSubmissionBanner(applicantId) {
+  const confirmationCard = document.getElementById("submission-confirmation");
+  const formContainer = document.getElementById("form-container");
+  const progressRail = document.getElementById("progress-rail");
+  const realityCheck = document.getElementById("store-reality-check");
+  const step2Link = document.getElementById("confirmation-step2-link");
+
+  if (step2Link && applicantId) {
+    step2Link.href = `/level2.html?id=${encodeURIComponent(applicantId)}`;
+  }
+
+  if (confirmationCard) confirmationCard.style.display = "block";
+  if (formContainer) formContainer.style.display = "none";
+  if (progressRail) progressRail.style.display = "none";
+  if (realityCheck) realityCheck.style.display = "none";
 }
 
 function hideSubmissionBanner() {
-  if (!submissionBanner) return;
-  submissionBanner.hidden = true;
+  const confirmationCard = document.getElementById("submission-confirmation");
+  const formContainer = document.getElementById("form-container");
+  const progressRail = document.getElementById("progress-rail");
+  const realityCheck = document.getElementById("store-reality-check");
+
+  if (confirmationCard) confirmationCard.style.display = "none";
+  if (formContainer) formContainer.style.display = "";
+  if (progressRail) progressRail.style.display = "";
+  if (realityCheck) realityCheck.style.display = "";
 }
 
 function seedDemoData() {
