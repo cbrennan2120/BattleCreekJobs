@@ -98,6 +98,7 @@
                     <select id="stage-filter">
                       <option value="all">All stages</option>
                       <option value="new">New (Level 1)</option>
+                      <option value="sent_step2">Sent Step 2 Invite</option>
                       <option value="full_completed">Level 2 Completed</option>
                       <option value="interview">Interviewing</option>
                       <option value="hold">Hold</option>
@@ -189,7 +190,15 @@
                   <div>
                     <p class="eyebrow">Email templates</p>
                     <h4>Messages used by applicant email buttons</h4>
-                    <p class="manager-subtitle">Available placeholders: {{firstName}}, {{fullName}}, {{storeName}}, {{payRate}}, {{availabilityRequirement}}, {{schedulingLink}}, {{interviewLocation}}, {{interviewWindow}}, {{senderName}}, {{senderTitle}}.</p>
+                    <p class="manager-subtitle">Available placeholders: {{firstName}}, {{fullName}}, {{position}}, {{level2Url}}, {{storeName}}, {{payRate}}, {{availabilityRequirement}}, {{schedulingLink}}, {{interviewLocation}}, {{interviewWindow}}, {{senderName}}, {{senderTitle}}.</p>
+                  </div>
+                  <div class="field">
+                    <label for="level2InviteSubjectTemplate">Step 2 invite subject</label>
+                    <input id="level2InviteSubjectTemplate" name="level2InviteSubjectTemplate">
+                  </div>
+                  <div class="field">
+                    <label for="level2InviteBodyTemplate">Step 2 invite message</label>
+                    <textarea id="level2InviteBodyTemplate" name="level2InviteBodyTemplate" rows="10"></textarea>
                   </div>
                   <div class="field">
                     <label for="inviteSubjectTemplate">Interview invite subject</label>

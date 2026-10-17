@@ -37,6 +37,21 @@ export const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
+  level2InviteSubjectTemplate: "{{storeName}} - Next Step (Full Application)",
+  level2InviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for your interest in joining Pet Supplies Plus Battle Creek!
+
+We reviewed your initial availability and pay expectations for the {{position}} role and would like to invite you to complete Step 2 of our hiring process (employment history, references, and background details):
+
+{{level2Url}}
+
+Once you submit your full details, we will review them and reach out to schedule an in-person interview.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
   inviteSubjectTemplate: "{{storeName}} interview invitation",
   inviteBodyTemplate: `Hi {{firstName}},
 
@@ -76,6 +91,7 @@ Thank you,
 
 export const STAGE_LABELS = {
   new: "New",
+  sent_step2: "Sent Step 2 Invite",
   full_completed: "Level 2 Completed",
   interview: "Interviewing",
   hold: "Hold",

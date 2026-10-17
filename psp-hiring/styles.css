@@ -1236,6 +1236,16 @@ a {
   box-shadow: 0 12px 24px rgba(0, 120, 45, 0.12);
 }
 
+.candidate-item.level2-ready {
+  border-left: 4px solid var(--green);
+  background: linear-gradient(90deg, rgba(0, 175, 65, 0.05) 0%, #ffffff 30%);
+}
+
+.candidate-item.level2-ready.active {
+  border-left: 4px solid var(--green);
+  border-color: rgba(0, 175, 65, 0.5);
+}
+
 .candidate-item-top,
 .candidate-meta,
 .tag-row,

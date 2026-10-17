@@ -18,6 +18,21 @@ const DEFAULT_STORE_CONFIG = {
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
+  level2InviteSubjectTemplate: "{{storeName}} - Next Step (Full Application)",
+  level2InviteBodyTemplate: `Hi {{firstName}},
+
+Thank you for your interest in joining Pet Supplies Plus Battle Creek!
+
+We reviewed your initial availability and pay expectations for the {{position}} role and would like to invite you to complete Step 2 of our hiring process (employment history, references, and background details):
+
+{{level2Url}}
+
+Once you submit your full details, we will review them and reach out to schedule an in-person interview.
+
+Thank you,
+{{senderName}}
+{{senderTitle}}
+{{storeName}}`,
   inviteSubjectTemplate: "{{storeName}} interview invitation",
   inviteBodyTemplate: `Hi {{firstName}},
 
@@ -76,9 +91,10 @@ const SHIFTS = [
   { id: "evening", label: "Closing Shift", hours: "5p - 9p" }
 ];
 
-const STAGES = ["new", "full_completed", "interview", "hold", "declined", "hired"];
+const STAGES = ["new", "sent_step2", "full_completed", "interview", "hold", "declined", "hired"];
 const STAGE_LABELS = {
   new: "New (Level 1)",
+  sent_step2: "Sent Step 2 Invite",
   full_completed: "Level 2 Completed",
   interview: "Interviewing",
   hold: "Hold",
@@ -1070,8 +1086,10 @@ function renderBucket(title, caption, count) {
 
 function renderCandidateItem(candidate) {
   const activeClass = candidate.id === selectedApplicantId ? "active" : "";
+  const isLevel2Ready = Boolean(candidate.level2 || candidate.stage === "full_completed");
+  const level2Class = isLevel2Ready ? "level2-ready" : "";
   return `
-    <button type="button" class="candidate-item ${activeClass}" data-id="${candidate.id}">
+    <button type="button" class="candidate-item ${activeClass} ${level2Class}" data-id="${candidate.id}">
       <div class="candidate-item-top">
         <div>
           <h4>${escapeHtml(candidate.fullName)}</h4>
@@ -1084,7 +1102,8 @@ function renderCandidateItem(candidate) {
         <span>${candidate.availabilityPercent}% availability overlap</span>
       </div>
       <div class="tag-row">
-        ${candidate.level2 || candidate.stage === "full_completed" ? `<span class="tag" style="background: var(--green-soft); color: var(--green-deep); font-weight: 700; border: 1px solid var(--green);">✓ Level 2 Ready</span>` : ""}
+        ${isLevel2Ready ? `<span class="tag" style="background: var(--green-soft); color: var(--green-deep); font-weight: 700; border: 1px solid var(--green);">✓ Level 2 Ready</span>` : ""}
+        ${candidate.stage === "sent_step2" ? `<span class="tag" style="background: #EDE7F6; color: #512DA8; font-weight: 700; border: 1px solid #B39DDB;">✉ Step 2 Sent</span>` : ""}
         ${candidate.experienceLevel === "first_job" ? `<span class="tag" style="background: #FFF8E1; color: #8D6E63;">🌱 First Job</span>` : ""}
         <span class="tag ${candidate.payFitLabel === "Out of range" ? "alert" : ""}">${candidate.payFitLabel}</span>
         <span class="tag ${candidate.flags.includes("weekend-missing") ? "warn" : ""}">${candidate.flags.includes("weekend-missing") ? "Weekend gap" : "Weekend ready"}</span>
@@ -1092,26 +1111,6 @@ function renderCandidateItem(candidate) {
       </div>
     </button>
   `;
-}
-
-function buildLevel2InviteMessage(candidate) {
-  const firstName = (candidate.fullName || "Candidate").trim().split(/\s+/)[0];
-  const level2Url = `${window.location.origin}/level2.html?id=${encodeURIComponent(candidate.id)}&name=${encodeURIComponent(candidate.fullName)}&email=${encodeURIComponent(candidate.email || "")}&phone=${encodeURIComponent(candidate.phone || "")}`;
-  return `Hi ${firstName},
-
-Thank you for your initial application for the ${candidate.position} role at Pet Supplies Plus Battle Creek (Store #0212)!
-
-To help our team prepare for your interview, please complete Step 2 of our application here:
-${level2Url}
-
-This step asks about your background, 2 references, and pet experience. It attaches directly to your profile.
-
-Thank you,
-Chris Brennan
-Store Team Leader
-Pet Supplies Plus Battle Creek
-1791 W. Columbia Ave
-psp0212@petsuppliesplus.com`;
 }
 
 function renderLevel2Section(candidate) {
@@ -1337,9 +1336,12 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("mark-declined")?.addEventListener("click", async () => updateCandidate(selectedApplicantId, { stage: "declined", lastAction: "mark-declined" }));
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
   document.getElementById("open-calendar-link")?.addEventListener("click", () => window.open(storeConfig.schedulingLink || DEFAULT_STORE_CONFIG.schedulingLink, "_blank"));
-  document.getElementById("print-scorecard")?.addEventListener("click", () => printCandidateScorecard(candidate));
-  document.getElementById("open-level2-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, `Pet Supplies Plus Battle Creek - Next Step (Full Application)`, buildLevel2InviteMessage(candidate))));
-  document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
+  document.getElementById("open-level2-email")?.addEventListener("click", async () => {
+    openMailto(buildMailtoLink(candidate.email, buildLevel2InviteSubject(candidate), buildLevel2InviteMessage(candidate)));
+    if (candidate.stage === "new") {
+      await updateCandidate(selectedApplicantId, { stage: "sent_step2", lastAction: "sent-step2-invite" });
+    }
+  });
   document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
   document.getElementById("copy-level2-link")?.addEventListener("click", () => copyTextToClipboard(level2Url));
   document.getElementById("copy-level2-message")?.addEventListener("click", () => copyTextToClipboard(buildLevel2InviteMessage(candidate)));
@@ -1547,6 +1549,14 @@ async function deleteCandidate(id, fullName) {
   }
 }
 
+function buildLevel2InviteSubject(candidate) {
+  return renderMessageTemplate(storeConfig.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate, candidate);
+}
+
+function buildLevel2InviteMessage(candidate) {
+  return renderMessageTemplate(storeConfig.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate, candidate);
+}
+
 function buildInviteSubject(candidate) {
   return renderMessageTemplate(storeConfig.inviteSubjectTemplate || DEFAULT_STORE_CONFIG.inviteSubjectTemplate, candidate);
 }
@@ -1568,9 +1578,12 @@ function getCandidateFirstName(candidate) {
 }
 
 function getTemplateContext(candidate) {
+  const level2Url = `${window.location.origin}/level2.html?id=${encodeURIComponent(candidate?.id || "")}&name=${encodeURIComponent(candidate?.fullName || "")}&email=${encodeURIComponent(candidate?.email || "")}&phone=${encodeURIComponent(candidate?.phone || "")}`;
   return {
     firstName: getCandidateFirstName(candidate),
     fullName: candidate?.fullName || "",
+    position: candidate?.position || "Store Team Member",
+    level2Url,
     storeName: storeConfig.name || DEFAULT_STORE_CONFIG.name,
     payRate: `$${Number(storeConfig.payMin || DEFAULT_STORE_CONFIG.payMin).toFixed(2)}`,
     availabilityRequirement: availabilityRequirementText(),
@@ -1830,6 +1843,8 @@ function hydrateSettingsForm() {
   settingsForm.elements.namedItem("senderName").value = storeConfig.senderName || DEFAULT_STORE_CONFIG.senderName;
   settingsForm.elements.namedItem("senderTitle").value = storeConfig.senderTitle || DEFAULT_STORE_CONFIG.senderTitle;
   settingsForm.elements.namedItem("schedulingLink").value = storeConfig.schedulingLink;
+  settingsForm.elements.namedItem("level2InviteSubjectTemplate").value = storeConfig.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate;
+  settingsForm.elements.namedItem("level2InviteBodyTemplate").value = storeConfig.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate;
   settingsForm.elements.namedItem("inviteSubjectTemplate").value = storeConfig.inviteSubjectTemplate || DEFAULT_STORE_CONFIG.inviteSubjectTemplate;
   settingsForm.elements.namedItem("inviteBodyTemplate").value = storeConfig.inviteBodyTemplate || DEFAULT_STORE_CONFIG.inviteBodyTemplate;
   settingsForm.elements.namedItem("declineSubjectTemplate").value = storeConfig.declineSubjectTemplate || DEFAULT_STORE_CONFIG.declineSubjectTemplate;
@@ -1858,6 +1873,8 @@ async function saveSettingsFromForm() {
     senderName: elements.namedItem("senderName").value.trim() || DEFAULT_STORE_CONFIG.senderName,
     senderTitle: elements.namedItem("senderTitle").value.trim() || DEFAULT_STORE_CONFIG.senderTitle,
     schedulingLink: elements.namedItem("schedulingLink").value.trim() || DEFAULT_STORE_CONFIG.schedulingLink,
+    level2InviteSubjectTemplate: elements.namedItem("level2InviteSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate,
+    level2InviteBodyTemplate: elements.namedItem("level2InviteBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate,
     inviteSubjectTemplate: elements.namedItem("inviteSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteSubjectTemplate,
     inviteBodyTemplate: elements.namedItem("inviteBodyTemplate").value.trim() || DEFAULT_STORE_CONFIG.inviteBodyTemplate,
     declineSubjectTemplate: elements.namedItem("declineSubjectTemplate").value.trim() || DEFAULT_STORE_CONFIG.declineSubjectTemplate,
