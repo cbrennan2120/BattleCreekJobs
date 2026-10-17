@@ -3,419 +3,277 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet Supplies Plus - Level 2 Application</title>
+  <title>Step 2: Full Application — Pet Supplies Plus Battle Creek</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    /* Accessibility and Mobile Enhancements */
-    fieldset.field { border: none; padding: 0; margin: 0 0 20px 0; }
-    legend.grid-label { font-weight: 700; margin-bottom: 8px; display: block; }
-    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
-    .error-highlight { border-color: var(--red) !important; background-color: rgba(227, 91, 85, 0.05); }
-    .error-message { color: var(--red); font-size: 0.85rem; margin-top: 4px; display: block; }
-  </style>
 </head>
 <body>
   <div class="page-shell">
     <header class="topbar">
       <div class="brand-lockup">
-        <div class="brand-mark brand-logo-stack" aria-label="Pet Supplies Plus logo">
-          <div class="brand-logo-wordmark">
-            <span class="brand-logo-line">PET SUPPLIES</span>
-            <span class="brand-logo-line brand-logo-line-plus">PLUS.</span>
-          </div>
-          <p class="brand-logo-tagline">Neighborly hiring. Minus the hassle.</p>
+        <a href="/" class="brand-mark" aria-label="Pet Supplies Plus Battle Creek Home">
+          <img src="assets/psp-logo-white-on-green.png" alt="Pet Supplies Plus" class="brand-logo-img">
+        </a>
+        <div class="brand-info">
+          <p class="brand-name">Pet Supplies Plus Battle Creek</p>
+          <p class="brand-tag">Store #0212 &bull; 1791 W. Columbia Ave</p>
         </div>
-        <div>
-          <h1 class="brand-name" style="margin:0; font-size:1.7rem;">Pet Supplies Plus Battle Creek</h1>
-          <p class="brand-tag" style="margin:0;">Level 2 Application</p>
-        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="status-pill" style="background: var(--green-soft); color: var(--green-deep); border: 1px solid var(--green);">Step 2 of 2</span>
       </div>
     </header>
 
     <main class="single-column-layout">
       <section class="applicant-column">
-        <section class="application-panel" id="application">
+        <section class="application-panel">
           <div class="section-heading">
             <div>
-              <h2>Thank you for your interest in joining our team!</h2>
+              <p class="eyebrow">Candidate Follow-Up Application</p>
+              <h2>Step 2: Background, Reliability & Pet Fit</h2>
             </div>
+          </div>
+
+          <div class="reality-check-card" id="candidate-greeting-card">
+            <div class="reality-check-heading">
+              <p class="eyebrow">Candidate Profile Linked</p>
+              <h3 id="candidate-greeting">Welcome back!</h3>
+            </div>
+            <p id="candidate-subtitle" style="margin: 0; color: var(--text);">
+              Thank you for applying to Pet Supplies Plus Battle Creek. This second step gathers a little more background so we can prepare for your interview. It attaches directly to your initial application.
+            </p>
           </div>
 
           <div class="submission-banner" id="submission-banner" hidden>
             <div>
-              <strong>Thank you!</strong>
-              <p>We've received your follow-up details. We'll be reviewing them and reaching out regarding the next steps.</p>
+              <strong>Thank You! Step 2 Application Complete</strong>
+              <p>Your full application has been submitted and attached directly to your Store #0212 candidate profile. Our store leadership team will review your responses and reach out shortly regarding interview scheduling!</p>
             </div>
           </div>
 
           <div class="application-grid" id="form-container">
-            <section class="card form-card">
-              <div class="card-heading">
-                <div>
-                  <h3 id="step-title">Applicant Details</h3>
-                </div>
-              </div>
-              <div class="helper-banner" aria-live="polite">
-                This application helps us learn more about your experience, work style, and availability before scheduling in-person interviews. All required fields are marked with an asterisk (*).
-              </div>
+            <section class="card form-card" style="width: 100%;">
               <form id="level2-form" novalidate>
-                
-                <!-- Applicant Information -->
+                <!-- Hidden inputs for linking -->
+                <input type="hidden" id="applicantId" name="applicantId" value="">
+                <input type="hidden" id="prefillName" name="fullName" value="">
+                <input type="hidden" id="prefillEmail" name="email" value="">
+                <input type="hidden" id="prefillPhone" name="phone" value="">
+
+                <!-- Section 1: Education & Experience Track -->
                 <div class="step-section">
-                  <h4>Applicant Information</h4>
-                  <div class="field-grid">
-                    <div class="field">
-                      <label for="fullName">Full Name <span aria-hidden="true">*</span></label>
-                      <input id="fullName" name="fullName" type="text" autocomplete="name" required>
-                    </div>
-                    <div class="field">
-                      <label for="email">Email Address <span aria-hidden="true">*</span></label>
-                      <input id="email" name="email" type="email" autocomplete="email" required>
-                    </div>
-                    <div class="field">
-                      <label for="phone">Phone Number <span aria-hidden="true">*</span></label>
-                      <input id="phone" name="phone" type="tel" autocomplete="tel" required>
-                    </div>
-                    <div class="field">
-                      <label for="zipCode">Zip Code <span aria-hidden="true">*</span></label>
-                      <input id="zipCode" name="zipCode" type="text" autocomplete="postal-code" required>
-                    </div>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Availability -->
-                <div class="step-section">
-                  <h4>Availability</h4>
-                  
-                  <fieldset class="field">
-                    <legend class="grid-label">Weekly availability</legend>
-                    <div class="table-responsive">
-                      <table class="availability-table">
-                        <thead>
-                          <tr>
-                            <th scope="col">Shift</th>
-                            <th scope="col">Mon</th>
-                            <th scope="col">Tue</th>
-                            <th scope="col">Wed</th>
-                            <th scope="col">Thu</th>
-                            <th scope="col">Fri</th>
-                            <th scope="col">Sat</th>
-                            <th scope="col">Sun</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <th scope="row">Morning</th>
-                            <td><input type="checkbox" name="avail-mon-morning" value="yes" aria-label="Monday Morning"></td>
-                            <td><input type="checkbox" name="avail-tue-morning" value="yes" aria-label="Tuesday Morning"></td>
-                            <td><input type="checkbox" name="avail-wed-morning" value="yes" aria-label="Wednesday Morning"></td>
-                            <td><input type="checkbox" name="avail-thu-morning" value="yes" aria-label="Thursday Morning"></td>
-                            <td><input type="checkbox" name="avail-fri-morning" value="yes" aria-label="Friday Morning"></td>
-                            <td><input type="checkbox" name="avail-sat-morning" value="yes" aria-label="Saturday Morning"></td>
-                            <td><input type="checkbox" name="avail-sun-morning" value="yes" aria-label="Sunday Morning"></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">Afternoon</th>
-                            <td><input type="checkbox" name="avail-mon-afternoon" value="yes" aria-label="Monday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-tue-afternoon" value="yes" aria-label="Tuesday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-wed-afternoon" value="yes" aria-label="Wednesday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-thu-afternoon" value="yes" aria-label="Thursday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-fri-afternoon" value="yes" aria-label="Friday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-sat-afternoon" value="yes" aria-label="Saturday Afternoon"></td>
-                            <td><input type="checkbox" name="avail-sun-afternoon" value="yes" aria-label="Sunday Afternoon"></td>
-                          </tr>
-                          <tr>
-                            <th scope="row">Evening</th>
-                            <td><input type="checkbox" name="avail-mon-evening" value="yes" aria-label="Monday Evening"></td>
-                            <td><input type="checkbox" name="avail-tue-evening" value="yes" aria-label="Tuesday Evening"></td>
-                            <td><input type="checkbox" name="avail-wed-evening" value="yes" aria-label="Wednesday Evening"></td>
-                            <td><input type="checkbox" name="avail-thu-evening" value="yes" aria-label="Thursday Evening"></td>
-                            <td><input type="checkbox" name="avail-fri-evening" value="yes" aria-label="Friday Evening"></td>
-                            <td><input type="checkbox" name="avail-sat-evening" value="yes" aria-label="Saturday Evening"></td>
-                            <td><input type="checkbox" name="avail-sun-evening" value="yes" aria-label="Sunday Evening"></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </fieldset>
-
-                  <div class="field">
-                    <label for="hoursPerWeek">How many hours per week are you hoping to work? <span aria-hidden="true">*</span></label>
-                    <select id="hoursPerWeek" name="hoursPerWeek" required>
-                      <option value="">Select an option...</option>
-                      <option value="Less than 10">Less than 10</option>
-                      <option value="10-15">10-15</option>
-                      <option value="15-20">15-20</option>
-                      <option value="20-25">20-25</option>
-                      <option value="25-30">25-30</option>
-                      <option value="30+">30+</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label for="schedulingRestrictions">Are there any scheduling restrictions we should know about?</label>
-                    <textarea id="schedulingRestrictions" name="schedulingRestrictions"></textarea>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Education & Employment -->
-                <div class="step-section">
-                  <h4>Education & Employment</h4>
-                  
-                  <div class="field" style="margin-bottom: 24px;">
-                    <label for="lastGradeCompleted">Last grade completed <span aria-hidden="true">*</span></label>
-                    <input id="lastGradeCompleted" name="lastGradeCompleted" type="text" required placeholder="e.g. 11th Grade, High School Diploma, Some College">
-                  </div>
-
-                  <div class="field" style="margin-bottom: 24px;">
-                    <label for="schoolName">Name of School</label>
-                    <input id="schoolName" name="schoolName" type="text" placeholder="e.g. Battle Creek Central High School">
-                  </div>
-                  
-                  <div class="field-group">
-                    <strong>Most Recent Employer (if applicable)</strong>
-                    <div class="field-grid">
-                      <div class="field">
-                        <label for="emp1Company">Company</label>
-                        <input id="emp1Company" name="emp1Company" type="text" autocomplete="organization">
-                      </div>
-                      <div class="field">
-                        <label for="emp1Position">Position</label>
-                        <input id="emp1Position" name="emp1Position" type="text" autocomplete="organization-title">
-                      </div>
-                      <div class="field">
-                        <label for="emp1Dates">Dates Employed</label>
-                        <input id="emp1Dates" name="emp1Dates" type="text">
-                      </div>
-                      <div class="field">
-                        <label for="emp1Reason">Reason for Leaving</label>
-                        <input id="emp1Reason" name="emp1Reason" type="text">
-                      </div>
-                    </div>
-                    <div class="field">
-                      <label for="emp1Duties">Briefly describe your responsibilities:</label>
-                      <textarea id="emp1Duties" name="emp1Duties"></textarea>
-                    </div>
-                  </div>
-
-                  <div class="field-group" style="margin-top: 24px;">
-                    <strong>Previous Employer</strong>
-                    <div class="field-grid">
-                      <div class="field">
-                        <label for="emp2Company">Company</label>
-                        <input id="emp2Company" name="emp2Company" type="text" autocomplete="organization">
-                      </div>
-                      <div class="field">
-                        <label for="emp2Position">Position</label>
-                        <input id="emp2Position" name="emp2Position" type="text" autocomplete="organization-title">
-                      </div>
-                      <div class="field">
-                        <label for="emp2Dates">Dates Employed</label>
-                        <input id="emp2Dates" name="emp2Dates" type="text">
-                      </div>
-                      <div class="field">
-                        <label for="emp2Reason">Reason for Leaving</label>
-                        <input id="emp2Reason" name="emp2Reason" type="text">
-                      </div>
-                    </div>
-                    <div class="field">
-                      <label for="emp2Duties">Briefly describe your responsibilities:</label>
-                      <textarea id="emp2Duties" name="emp2Duties"></textarea>
-                    </div>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Reliability & Work Ethic -->
-                <div class="step-section">
-                  <h4>Reliability & Work Ethic</h4>
-                  
-                  <div class="field">
-                    <label for="excellentAttendance">What does excellent attendance mean to you? <span aria-hidden="true">*</span></label>
-                    <textarea id="excellentAttendance" name="excellentAttendance" required></textarea>
-                  </div>
-
-                  <div class="field">
-                    <label for="absences">In the last 12 months, how many times were you absent from a scheduled shift (or missed school if no experience)? <span aria-hidden="true">*</span></label>
-                    <select id="absences" name="absences" required>
-                      <option value="">Select an option...</option>
-                      <option value="0">0</option>
-                      <option value="1-2">1-2</option>
-                      <option value="3-5">3-5</option>
-                      <option value="More than 5">More than 5</option>
-                    </select>
-                  </div>
-
-                  <div class="field">
-                    <label for="unexpectedLate">Tell us about a time something unexpected happened that could have made you late or miss work. What did you do? <span aria-hidden="true">*</span></label>
-                    <textarea id="unexpectedLate" name="unexpectedLate" required></textarea>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Customer Service -->
-                <div class="step-section">
-                  <h4>Customer Service</h4>
-                  
-                  <div class="field">
-                    <label for="greatCustomerService">Tell us about a time you provided great customer service. <span aria-hidden="true">*</span></label>
-                    <textarea id="greatCustomerService" name="greatCustomerService" required></textarea>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Pet Supplies Plus Fit -->
-                <div class="step-section">
-                  <h4>Pet Supplies Plus Fit</h4>
-                  
-                  <div class="field">
-                    <label for="whyPsp">Why do you want to work at Pet Supplies Plus? <span aria-hidden="true">*</span></label>
-                    <textarea id="whyPsp" name="whyPsp" required></textarea>
-                  </div>
-
-                  <fieldset class="field">
-                    <legend style="margin-bottom:8px;">Do you currently own pets?</legend>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Dog" id="pet-dog"><label for="pet-dog">Dog</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Cat" id="pet-cat"><label for="pet-cat">Cat</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Fish" id="pet-fish"><label for="pet-fish">Fish</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Bird" id="pet-bird"><label for="pet-bird">Bird</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Small Animal" id="pet-small"><label for="pet-small">Small Animal</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="Reptile" id="pet-reptile"><label for="pet-reptile">Reptile</label></div>
-                    <div class="checkbox-row"><input type="checkbox" name="ownPets" value="None" id="pet-none"><label for="pet-none">None</label></div>
-                  </fieldset>
-
-                  <div class="field">
-                    <label for="knowledgeablePets">Which types of pets are you most knowledgeable about?</label>
-                    <textarea id="knowledgeablePets" name="knowledgeablePets"></textarea>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Coachability & Growth -->
-                <div class="step-section">
-                  <h4>Coachability & Growth</h4>
-                  
-                  <div class="field">
-                    <label for="selfTaught">What is something you have taught yourself or learned outside of school or work in the last year? <span aria-hidden="true">*</span></label>
-                    <textarea id="selfTaught" name="selfTaught" required></textarea>
-                  </div>
-
-                  <div class="field">
-                    <label for="greatestStrengths">What would your previous manager or teacher say are your greatest strengths? <span aria-hidden="true">*</span></label>
-                    <textarea id="greatestStrengths" name="greatestStrengths" required></textarea>
-                  </div>
-
-                  <div class="field">
-                    <label for="areaToImprove">What is one area they would suggest you improve? <span aria-hidden="true">*</span></label>
-                    <textarea id="areaToImprove" name="areaToImprove" required></textarea>
-                  </div>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- Physical Requirements -->
-                <div class="step-section">
-                  <h4>Physical Requirements</h4>
-                  <p style="margin-bottom: 8px;">This position may require:</p>
-                  <ul style="margin-top: 0; margin-bottom: 24px; padding-left: 20px; line-height: 1.6; color: #4b5563;">
-                    <li>Standing for extended periods</li>
-                    <li>Lifting up to 50 pounds</li>
-                    <li>Working around pet food, animal bedding, cleaning products, and live animals</li>
-                    <li>Frequent bending, reaching, and stocking</li>
-                    <li>Climbing ladders</li>
-                  </ul>
-                  
-                  <fieldset class="field">
-                    <legend style="font-weight: 600; margin-bottom:12px;">Can you perform these essential job functions with or without reasonable accommodation? <span aria-hidden="true">*</span></legend>
-                    <div style="display: flex; gap: 24px; align-items: center;">
-                      <label for="physicalRequirements-yes" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input id="physicalRequirements-yes" type="radio" name="physicalRequirements" value="Yes" required style="width: 1.2rem; height: 1.2rem;">
-                        <span style="font-size: 1.05rem;">Yes</span>
-                      </label>
-                      <label for="physicalRequirements-no" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input id="physicalRequirements-no" type="radio" name="physicalRequirements" value="No" required style="width: 1.2rem; height: 1.2rem;">
-                        <span style="font-size: 1.05rem;">No</span>
-                      </label>
-                    </div>
-                  </fieldset>
-                </div>
-
-                <hr class="section-divider">
-
-                <!-- References -->
-                <div class="step-section">
-                  <h4>References</h4>
-                  
-                  <div class="field-grid" style="margin-bottom: 16px;">
-                    <strong>Reference #1 (if applicable)</strong>
-                    <div class="field">
-                      <label for="ref1Name">Name</label>
-                      <input id="ref1Name" name="ref1Name" type="text" autocomplete="name">
-                    </div>
-                    <div class="field">
-                      <label for="ref1Rel">Relationship</label>
-                      <input id="ref1Rel" name="ref1Rel" type="text">
-                    </div>
-                    <div class="field">
-                      <label for="ref1Phone">Phone Number</label>
-                      <input id="ref1Phone" name="ref1Phone" type="tel" autocomplete="tel">
-                    </div>
+                  <div class="section-callout">
+                    <h4>1. Education & Experience</h4>
+                    <p>Tell us about your school background and work history (or select First Job if you are starting your work journey!).</p>
                   </div>
 
                   <div class="field-grid">
-                    <strong>Reference #2</strong>
                     <div class="field">
-                      <label for="ref2Name">Name</label>
-                      <input id="ref2Name" name="ref2Name" type="text" autocomplete="name">
+                      <label for="lastGradeCompleted">Highest grade or education completed <span style="color: var(--red);">*</span></label>
+                      <input id="lastGradeCompleted" name="lastGradeCompleted" type="text" required placeholder="e.g. 11th Grade, High School Diploma, Some College">
                     </div>
                     <div class="field">
-                      <label for="ref2Rel">Relationship</label>
-                      <input id="ref2Rel" name="ref2Rel" type="text">
-                    </div>
-                    <div class="field">
-                      <label for="ref2Phone">Phone Number</label>
-                      <input id="ref2Phone" name="ref2Phone" type="tel" autocomplete="tel">
+                      <label for="schoolName">School name <span style="color: var(--red);">*</span></label>
+                      <input id="schoolName" name="schoolName" type="text" required placeholder="e.g. Lakeview High School, Battle Creek Central, KCC">
                     </div>
                   </div>
-                </div>
 
-                <hr class="section-divider">
-
-                <!-- Final Question & Signature -->
-                <div class="step-section">
-                  <h4>Final Question</h4>
-                  
-                  <div class="field">
-                    <label for="first90Days">If we hired you tomorrow, what would make you successful during your first 90 days? <span aria-hidden="true">*</span></label>
-                    <textarea id="first90Days" name="first90Days" required></textarea>
+                  <div style="margin-top: 18px;">
+                    <label style="font-weight: 700; color: var(--green-deep);">Which best describes your work background?</label>
+                    <div class="experience-grid" style="margin-top: 8px;">
+                      <label class="experience-card is-active" for="track-prior">
+                        <input type="radio" id="track-prior" name="experienceTrack" value="prior_work" checked>
+                        <h4>💼 I have prior work experience</h4>
+                        <p>I have worked a part-time, seasonal, food service, or retail job before.</p>
+                      </label>
+                      <label class="experience-card" for="track-first">
+                        <input type="radio" id="track-first" name="experienceTrack" value="first_job">
+                        <h4>🌱 This will be my first job!</h4>
+                        <p>Student or first-time job seeker with no formal employer history yet.</p>
+                      </label>
+                    </div>
                   </div>
 
-                  <div class="field" style="margin-top: 32px;">
-                    <p class="eyebrow">I certify that the information provided is accurate and complete to the best of my knowledge.</p>
+                  <!-- Employer Track (Shown if prior_work) -->
+                  <div id="employer-track" style="margin-top: 16px;">
+                    <div class="field-group" style="background: var(--bg-soft); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+                      <strong style="color: var(--green-deep); display: block; margin-bottom: 12px;">Most Recent Employer</strong>
+                      <div class="field-grid">
+                        <div class="field">
+                          <label for="emp1Company">Company / Business</label>
+                          <input id="emp1Company" name="emp1Company" type="text" placeholder="e.g. Meijer, Target, McDonald's">
+                        </div>
+                        <div class="field">
+                          <label for="emp1Position">Position / Title</label>
+                          <input id="emp1Position" name="emp1Position" type="text" placeholder="e.g. Cashier, Stocker, Crew Member">
+                        </div>
+                        <div class="field">
+                          <label for="emp1Dates">Dates Employed</label>
+                          <input id="emp1Dates" name="emp1Dates" type="text" placeholder="e.g. June 2025 - August 2026">
+                        </div>
+                        <div class="field">
+                          <label for="emp1Reason">Reason for Leaving</label>
+                          <input id="emp1Reason" name="emp1Reason" type="text" placeholder="e.g. Seasonal role ended, Seeking closer store">
+                        </div>
+                      </div>
+                      <div class="field" style="margin-top: 10px;">
+                        <label for="emp1Duties">Briefly describe your responsibilities:</label>
+                        <textarea id="emp1Duties" name="emp1Duties" rows="2" placeholder="e.g. Handled register checkout, stocked groceries, assisted customers"></textarea>
+                      </div>
+                    </div>
+
+                    <div class="field-group" style="background: var(--bg-soft); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--line); margin-top: 14px;">
+                      <strong style="color: var(--green-deep); display: block; margin-bottom: 12px;">Previous Employer (Optional)</strong>
+                      <div class="field-grid">
+                        <div class="field">
+                          <label for="emp2Company">Company / Business</label>
+                          <input id="emp2Company" name="emp2Company" type="text">
+                        </div>
+                        <div class="field">
+                          <label for="emp2Position">Position / Title</label>
+                          <input id="emp2Position" name="emp2Position" type="text">
+                        </div>
+                        <div class="field">
+                          <label for="emp2Dates">Dates Employed</label>
+                          <input id="emp2Dates" name="emp2Dates" type="text">
+                        </div>
+                        <div class="field">
+                          <label for="emp2Reason">Reason for Leaving</label>
+                          <input id="emp2Reason" name="emp2Reason" type="text">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- First-Job Track (Shown if first_job) -->
+                  <div id="first-job-track" style="margin-top: 16px; display: none;">
+                    <div class="growth-callout">
+                      <strong>We Love Training First-Time Team Members:</strong> Everyone starts somewhere! We evaluate you on dependability, attitude, and willingness to learn.
+                    </div>
+                    <div class="field">
+                      <label for="firstJobActivities">What activities, sports, clubs, volunteering, or household responsibilities have taught you responsibility? <span style="color: var(--red);">*</span></label>
+                      <textarea id="firstJobActivities" name="firstJobActivities" rows="3" placeholder="Tell us about how you manage your commitments, help your family/neighbors, or participate in school teams."></textarea>
+                    </div>
+                    <div class="field" style="margin-top: 12px;">
+                      <label for="firstJobExcitement">What are you most excited to learn in your first retail job? <span style="color: var(--red);">*</span></label>
+                      <textarea id="firstJobExcitement" name="firstJobExcitement" rows="2" placeholder="e.g. Operating a cash register, stocking inventory, customer service, or animal care support."></textarea>
+                    </div>
+                  </div>
+
+                  <!-- References -->
+                  <div style="margin-top: 24px;">
+                    <div class="section-callout">
+                      <h4>References</h4>
+                      <p>List 2 references who can speak to your reliability (can be previous managers, teachers, coaches, neighbors, or adult personal references).</p>
+                    </div>
                     <div class="field-grid">
-                      <div class="field">
-                        <label for="applicantSignature">Applicant Signature (Type Full Name) <span aria-hidden="true">*</span></label>
-                        <input id="applicantSignature" name="applicantSignature" type="text" autocomplete="name" required>
+                      <div class="field-group" style="background: var(--bg-soft); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+                        <strong style="display: block; margin-bottom: 8px;">Reference #1</strong>
+                        <div class="field"><label for="ref1Name">Full Name <span style="color: var(--red);">*</span></label><input id="ref1Name" name="ref1Name" type="text" required></div>
+                        <div class="field" style="margin-top: 8px;"><label for="ref1Rel">Relationship (e.g. Teacher, Coach, Manager) <span style="color: var(--red);">*</span></label><input id="ref1Rel" name="ref1Rel" type="text" required></div>
+                        <div class="field" style="margin-top: 8px;"><label for="ref1Phone">Phone Number <span style="color: var(--red);">*</span></label><input id="ref1Phone" name="ref1Phone" type="tel" required></div>
                       </div>
-                      <div class="field">
-                        <label for="signatureDate">Date <span aria-hidden="true">*</span></label>
-                        <input id="signatureDate" name="signatureDate" type="date" required>
+                      <div class="field-group" style="background: var(--bg-soft); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+                        <strong style="display: block; margin-bottom: 8px;">Reference #2</strong>
+                        <div class="field"><label for="ref2Name">Full Name <span style="color: var(--red);">*</span></label><input id="ref2Name" name="ref2Name" type="text" required></div>
+                        <div class="field" style="margin-top: 8px;"><label for="ref2Rel">Relationship (e.g. Teacher, Coach, Manager) <span style="color: var(--red);">*</span></label><input id="ref2Rel" name="ref2Rel" type="text" required></div>
+                        <div class="field" style="margin-top: 8px;"><label for="ref2Phone">Phone Number <span style="color: var(--red);">*</span></label><input id="ref2Phone" name="ref2Phone" type="tel" required></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="form-actions" style="margin-top: 32px;">
-                  <button class="button button-primary" type="submit" id="submit-level2">Submit Application</button>
+                <hr style="border: 0; border-top: 1px solid var(--line); margin: 32px 0;">
+
+                <!-- Section 2: Pet Knowledge & Reliability -->
+                <div class="step-section">
+                  <div class="section-callout">
+                    <h4>2. Pet Familiarity & Reliability</h4>
+                    <p>At Pet Supplies Plus, pets own people! Tell us about your pet experience and how you approach showing up for your team.</p>
+                  </div>
+
+                  <fieldset class="field" style="border: 0; padding: 0; margin-bottom: 20px;">
+                    <legend style="font-weight: 700; margin-bottom: 8px;">Which pets have you owned or cared for? (Check all that apply)</legend>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Dog"> Dog</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Cat"> Cat</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Fish"> Fish</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Bird"> Bird</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Small Animal"> Small Animal (Guinea Pig, Hamster, etc.)</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="Reptile"> Reptile / Amphibian</label>
+                      <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" name="ownPets" value="None"> None yet, but excited to learn!</label>
+                    </div>
+                  </fieldset>
+
+                  <div class="field">
+                    <label for="excellentAttendance">What does excellent attendance and being dependable mean to you? <span style="color: var(--red);">*</span></label>
+                    <textarea id="excellentAttendance" name="excellentAttendance" rows="3" required placeholder="How do you make sure you show up on time and support your teammates when scheduled?"></textarea>
+                  </div>
+
+                  <div class="field" style="margin-top: 16px;">
+                    <label for="selfTaught">Tell us about something you learned or taught yourself recently (inside or outside of work/school). <span style="color: var(--red);">*</span></label>
+                    <textarea id="selfTaught" name="selfTaught" rows="3" required placeholder="We look for curious team members who enjoy learning new products and skills!"></textarea>
+                  </div>
+
+                  <div class="field" style="margin-top: 16px;">
+                    <label for="scheduleConfirmation">Availability Check: Is your 7-day shift availability from your initial application still accurate?</label>
+                    <textarea id="scheduleConfirmation" name="scheduleConfirmation" rows="2" placeholder="e.g. Yes, my availability is still 100% accurate (or describe any upcoming schedule adjustments)."></textarea>
+                  </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--line); margin: 32px 0;">
+
+                <!-- Section 3: Essential Duties & Digital Signature -->
+                <div class="step-section">
+                  <div class="section-callout">
+                    <h4>3. Essential Store Duties & Digital Signature</h4>
+                    <p>Review the physical duties required for retail store team members.</p>
+                  </div>
+
+                  <div class="reality-check-card" style="margin-bottom: 20px;">
+                    <strong style="color: var(--green-deep); display: block; margin-bottom: 8px;">Physical Duties Required for Store #0212:</strong>
+                    <ul style="margin: 0; padding-left: 20px; line-height: 1.6; color: var(--text);">
+                      <li>Standing and walking for extended periods during scheduled shifts</li>
+                      <li>Lifting and carrying pet food bags and cat litter up to 50 lbs (including customer carry-outs)</li>
+                      <li>Climbing safety rolling ladders to stock elevated merchandise</li>
+                      <li>Cleaning shelves, registers, and animal habitats</li>
+                    </ul>
+                  </div>
+
+                  <fieldset class="field" style="border: 0; padding: 0; margin-bottom: 24px;">
+                    <legend style="font-weight: 700; margin-bottom: 10px;">Can you perform these essential functions with or without reasonable accommodation? <span style="color: var(--red);">*</span></legend>
+                    <div style="display: flex; gap: 24px;">
+                      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="physicalRequirements" value="Yes" required checked>
+                        <strong>Yes, I am comfortable with these duties</strong>
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="physicalRequirements" value="No" required>
+                        <span>No, these would be difficult</span>
+                      </label>
+                    </div>
+                  </fieldset>
+
+                  <div class="field">
+                    <label for="first90Days">If hired tomorrow, what would make you most successful during your first 90 days? <span style="color: var(--red);">*</span></label>
+                    <textarea id="first90Days" name="first90Days" rows="3" required placeholder="What strengths or work habits do you bring to Store #0212?"></textarea>
+                  </div>
+
+                  <div class="field-grid" style="margin-top: 24px; background: var(--bg-soft); padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--line);">
+                    <div class="field">
+                      <label for="applicantSignature">Applicant Digital Signature (Type Full Legal Name) <span style="color: var(--red);">*</span></label>
+                      <input id="applicantSignature" name="applicantSignature" type="text" required placeholder="e.g. Jane Doe">
+                    </div>
+                    <div class="field">
+                      <label for="signatureDate">Date Signed <span style="color: var(--red);">*</span></label>
+                      <input id="signatureDate" name="signatureDate" type="date" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 28px;">
+                  <button class="button button-primary button-large" type="submit" id="submit-level2" style="padding: 16px 32px; font-size: 1.1rem;">
+                    Submit Step 2 Application
+                  </button>
                 </div>
               </form>
             </section>
@@ -425,15 +283,13 @@
     </main>
   </div>
 
-  <form
-    name="level2-application"
-    method="POST"
-    data-netlify="true"
-    netlify-honeypot="bot-field"
-    hidden
-  >
+  <!-- Fallback Netlify Form for static crawling -->
+  <form name="level2-application" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="level2-application">
     <input type="text" name="bot-field">
+    <input type="text" name="applicantId">
+    <input type="text" name="fullName">
+    <input type="email" name="email">
     <textarea name="level2Payload"></textarea>
   </form>
 

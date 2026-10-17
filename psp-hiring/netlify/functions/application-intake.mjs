@@ -1,4 +1,4 @@
-import { errorResponse, jsonResponse, saveApplicantSubmission } from "./_lib/hiring-core.mjs";
+import { errorResponse, jsonResponse, saveApplicantSubmission, sendStoreNotificationEmail } from "./_lib/hiring-core.mjs";
 
 export default async (request) => {
   if (request.method !== "POST") {
@@ -18,6 +18,17 @@ export default async (request) => {
 
   try {
     const saved = await saveApplicantSubmission(applicant);
+
+    // Dispatch automated store email to psp0212@petsuppliesplus.com
+    try {
+      await sendStoreNotificationEmail({
+        type: "level1",
+        applicant: { ...applicant, id: saved.id }
+      });
+    } catch (notifErr) {
+      console.warn("Store notification warning:", notifErr);
+    }
+
     return jsonResponse({ received: true, submissionId: saved.id });
   } catch (error) {
     return errorResponse("Unable to save applicant intake.", 502, { details: String(error) });

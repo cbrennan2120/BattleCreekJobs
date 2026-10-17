@@ -32,27 +32,11 @@ export const DEFAULT_STORE_CONFIG = {
   preferEvenings: true,
   schedulingLink: "https://calendar.app.google/nijf5P59jCSbdGcX8",
   schedulingOwnerEmail: "cbrennan2120@gmail.com",
+  notificationEmail: "psp0212@petsuppliesplus.com",
   interviewWindow: "Tuesdays and Fridays from 3:00 PM to 4:00 PM, 20-minute interviews with a 10-minute buffer",
   interviewLocation: "1791 W. Columbia Ave, Battle Creek, MI",
   senderName: "Chris Brennan",
   senderTitle: "Store Team Leader",
-  level2Url: "https://psp.battlecreekjobs.app/level2.html",
-  level2InviteSubjectTemplate: "{{storeName}} application next steps",
-  level2InviteBodyTemplate: `Hi {{firstName}},
-
-Thank you for applying to {{storeName}}. You've passed our initial screening!
-
-Before we set up an interview, we would like to gather a little more information regarding your work and education history. 
-
-Please take a few minutes to complete the follow-up application here:
-{{level2Url}}
-
-If you have any questions, please let us know.
-
-Thank you,
-{{senderName}}
-{{senderTitle}}
-{{storeName}}`,
   inviteSubjectTemplate: "{{storeName}} interview invitation",
   inviteBodyTemplate: `Hi {{firstName}},
 
@@ -92,6 +76,7 @@ Thank you,
 
 export const STAGE_LABELS = {
   new: "New",
+  full_completed: "Level 2 Completed",
   interview: "Interviewing",
   hold: "Hold",
   declined: "Declined",
@@ -293,6 +278,70 @@ export async function deleteApplicantSubmission(submissionId) {
   await store.delete(`submissions/${submissionId}.json`);
 }
 
+export async function saveApplicantLevel2Data(applicantId, level2Data) {
+  const store = await getApplicantStore();
+  let record = null;
+
+  if (applicantId) {
+    try {
+      record = await store.get(`submissions/${applicantId}.json`, { type: "json" });
+    } catch {
+      record = null;
+    }
+  }
+
+  if (!record && level2Data.email) {
+    const all = await listApplicantSubmissions();
+    record = all.find((s) => {
+      const p = parseSubmissionPayload(s);
+      return (p.email || s.data?.email || "").toLowerCase() === level2Data.email.toLowerCase();
+    });
+  }
+
+  const id = record?.id || applicantId || crypto.randomUUID();
+  const existingPayload = record ? parseSubmissionPayload(record) : {};
+
+  const updatedPayload = {
+    ...existingPayload,
+    id,
+    fullName: existingPayload.fullName || level2Data.fullName || "Applicant",
+    email: existingPayload.email || level2Data.email || "",
+    phone: existingPayload.phone || level2Data.phone || "",
+    level2: {
+      ...level2Data,
+      submittedAt: new Date().toISOString()
+    },
+    stage: "full_completed"
+  };
+
+  const updatedRecord = {
+    id,
+    created_at: record?.created_at || new Date().toISOString(),
+    form_name: NETLIFY_FORM_NAME,
+    body: JSON.stringify(updatedPayload),
+    data: {
+      ...(record?.data || {}),
+      fullName: updatedPayload.fullName,
+      email: updatedPayload.email,
+      phone: updatedPayload.phone,
+      submissionPayload: JSON.stringify(updatedPayload)
+    }
+  };
+
+  await store.setJSON(`submissions/${id}.json`, updatedRecord);
+
+  try {
+    await saveReviewRecord(id, {
+      stage: "full_completed",
+      lastAction: `Step 2 completed on ${new Date().toLocaleDateString()}`
+    });
+  } catch (err) {
+    console.error("Failed to update review record stage:", err);
+  }
+
+  return updatedRecord;
+}
+
 export async function getEffectiveStoreConfig() {
   const store = await getConfigStore();
   const config = await store.get("store-config.json", { type: "json" });
@@ -318,9 +367,7 @@ export function normalizeStoreConfig(config = {}) {
     requireSunday: Boolean(config.requireSunday ?? DEFAULT_STORE_CONFIG.requireSunday),
     requireEvenings: Boolean(config.requireEvenings ?? DEFAULT_STORE_CONFIG.requireEvenings),
     preferEvenings: config.requireEvenings ? false : Boolean(config.preferEvenings ?? DEFAULT_STORE_CONFIG.preferEvenings),
-    level2Url: config.level2Url || DEFAULT_STORE_CONFIG.level2Url,
-    level2InviteSubjectTemplate: config.level2InviteSubjectTemplate || DEFAULT_STORE_CONFIG.level2InviteSubjectTemplate,
-    level2InviteBodyTemplate: config.level2InviteBodyTemplate || DEFAULT_STORE_CONFIG.level2InviteBodyTemplate
+    notificationEmail: config.notificationEmail || DEFAULT_STORE_CONFIG.notificationEmail
   };
 }
 
@@ -385,6 +432,7 @@ export function normalizeSubmission(submission, reviewRecord, storeConfig = DEFA
     email: payload.email || submission.email || submission.data?.email || "",
     phone: payload.phone || submission.data?.phone || "",
     city: payload.city || submission.data?.city || "",
+    experienceLevel: payload.experienceLevel || submission.data?.experienceLevel || "first_job",
     position: payload.position || submission.data?.position || "",
     ageBand: payload.ageBand || "",
     authorized: payload.authorized || "",
@@ -398,6 +446,7 @@ export function normalizeSubmission(submission, reviewRecord, storeConfig = DEFA
     whyWorkHere: payload.whyWorkHere || "",
     serviceExample: payload.serviceExample || "",
     availability: payload.availability || createBlankAvailability(),
+    level2: payload.level2 || null,
     managerNote: reviewRecord?.managerNote ?? "",
     stage: reviewRecord?.stage || payload.stage || "new",
     reviewedAt: reviewRecord?.reviewedAt || null,
@@ -589,4 +638,269 @@ export function sortApplicants(applicants) {
     if (b.score !== a.score) return b.score - a.score;
     return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
   });
+}
+
+export async function sendStoreNotificationEmail({ type, applicant, storeConfig }) {
+  const config = storeConfig || (await getEffectiveStoreConfig());
+  const toEmail = config.notificationEmail || "psp0212@petsuppliesplus.com";
+
+  let subject = "";
+  let summarySnippet = "";
+  let htmlBody = "";
+
+  if (type === "level1") {
+    const position = applicant.position || "Team Member";
+    const bucket = applicant.bucketLabel || "New Applicant";
+    const score = applicant.score !== undefined ? `${applicant.score}/100` : "Pending";
+    subject = `[PSP #0212 Hiring] Level 1 Screen: ${applicant.fullName} (${position} - ${bucket})`;
+
+    htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 20px; background-color: #f4f6f8; }
+    .card { background: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+    .header { background: #00AF41; color: #ffffff; padding: 24px; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    .header p { margin: 4px 0 0; font-size: 14px; opacity: 0.9; }
+    .content { padding: 24px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; background: #E8F5E9; color: #1B5E20; }
+    .field { margin-bottom: 16px; }
+    .label { font-size: 12px; text-transform: uppercase; color: #6b7280; font-weight: 600; margin-bottom: 4px; }
+    .value { font-size: 16px; color: #111827; font-weight: 500; }
+    .btn { display: inline-block; background: #00AF41; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; margin-top: 16px; }
+    .footer { padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>New Level 1 Application Received</h1>
+      <p>Pet Supplies Plus Battle Creek &bull; Store #0212</p>
+    </div>
+    <div class="content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <span class="badge">${bucket}</span>
+        <span style="font-weight: 700; color: #00AF41;">Score: ${score}</span>
+      </div>
+
+      <div class="field">
+        <div class="label">Candidate Name</div>
+        <div class="value">${applicant.fullName}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Position Applied For</div>
+        <div class="value">${position} (Starting Pay: $13.73/hr Base)</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Contact Info</div>
+        <div class="value">${applicant.email} &bull; ${applicant.phone || "No phone provided"}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Weekly Hours & Availability</div>
+        <div class="value">${applicant.hoursWanted || "12-35 hrs/wk"} (Availability Score: ${applicant.availabilityPercent || "N/A"}%)</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Experience Level</div>
+        <div class="value">${applicant.experienceLevel === "first_job" ? "🌱 First Job / Student Candidate" : "💼 Experienced Candidate"}</div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <a href="https://psp.battlecreekjobs.app/admin.html" class="btn" style="color:#ffffff;">Open Manager Admin Console</a>
+      </div>
+    </div>
+    <div class="footer">
+      Sent automatically by Pet Supplies Plus Store #0212 Hiring Portal to ${toEmail}.
+    </div>
+  </div>
+</body>
+</html>`;
+    summarySnippet = `New Level 1 Application: ${applicant.fullName} (${position}, ${bucket})`;
+  } else if (type === "level2") {
+    const l2 = applicant.level2 || {};
+    subject = `[PSP #0212 Hiring] Step 2 Completed: ${applicant.fullName} - Ready for Review`;
+
+    const petsText = Array.isArray(l2.petsOwned) ? l2.petsOwned.join(", ") : (l2.petsOwned || "None listed");
+    const trackText = l2.experienceTrack === "first_job" ? "🌱 First-Time Job / Student Track" : "💼 Prior Work History Track";
+
+    htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937; margin: 0; padding: 20px; background-color: #f4f6f8; }
+    .card { background: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+    .header { background: #00AF41; color: #ffffff; padding: 24px; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+    .header p { margin: 4px 0 0; font-size: 14px; opacity: 0.9; }
+    .content { padding: 24px; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 700; background: #E8F5E9; color: #1B5E20; }
+    .field { margin-bottom: 16px; }
+    .label { font-size: 12px; text-transform: uppercase; color: #6b7280; font-weight: 600; margin-bottom: 4px; }
+    .value { font-size: 15px; color: #111827; }
+    .quote { background: #f9fafb; padding: 12px; border-left: 3px solid #00AF41; font-style: italic; font-size: 14px; margin-top: 4px; }
+    .btn { display: inline-block; background: #00AF41; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; margin-top: 16px; }
+    .footer { padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>Step 2 Follow-Up Completed</h1>
+      <p>Pet Supplies Plus Battle Creek &bull; Store #0212</p>
+    </div>
+    <div class="content">
+      <div style="margin-bottom: 20px;">
+        <span class="badge">Level 2 Completed — Ready for Interview</span>
+      </div>
+
+      <div class="field">
+        <div class="label">Candidate Name</div>
+        <div class="value"><strong>${applicant.fullName}</strong> (${applicant.email} &bull; ${applicant.phone || "No phone"})</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Education & Track</div>
+        <div class="value">${l2.lastGradeCompleted || "N/A"} (${l2.schoolName || "N/A"}) &bull; ${trackText}</div>
+      </div>
+
+      ${l2.experienceTrack === "first_job" ? `
+      <div class="field">
+        <div class="label">Activities / Responsibilities</div>
+        <div class="quote">${l2.firstJobActivities || "None provided"}</div>
+      </div>
+      <div class="field">
+        <div class="label">What They Want to Learn</div>
+        <div class="quote">${l2.firstJobExcitement || "None provided"}</div>
+      </div>
+      ` : `
+      <div class="field">
+        <div class="label">Most Recent Employer</div>
+        <div class="value"><strong>${l2.emp1Company || "N/A"}</strong> — ${l2.emp1Position || "N/A"} (${l2.emp1Dates || "N/A"})</div>
+        <div class="quote">Reason: ${l2.emp1Reason || "N/A"}<br>Duties: ${l2.emp1Duties || "N/A"}</div>
+      </div>
+      `}
+
+      <div class="field">
+        <div class="label">References</div>
+        <div class="value">
+          1. ${l2.ref1Name || "N/A"} (${l2.ref1Rel || "N/A"}) — ${l2.ref1Phone || "N/A"}<br>
+          2. ${l2.ref2Name || "N/A"} (${l2.ref2Rel || "N/A"}) — ${l2.ref2Phone || "N/A"}
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Pet Familiarity</div>
+        <div class="value">${petsText}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Attendance & Dependability Philosophy</div>
+        <div class="quote">${l2.excellentAttendance || "N/A"}</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Physical Duties (50 lbs lifting / ladders)</div>
+        <div class="value"><strong>${l2.physicalRequirements || "Yes"}</strong></div>
+      </div>
+
+      <div class="field">
+        <div class="label">Digital Signature</div>
+        <div class="value">${l2.applicantSignature || applicant.fullName} &bull; Signed ${l2.signatureDate || "Today"}</div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <a href="https://psp.battlecreekjobs.app/admin.html" class="btn" style="color:#ffffff;">Review in Manager Console</a>
+      </div>
+    </div>
+    <div class="footer">
+      Sent automatically by Pet Supplies Plus Store #0212 Hiring Portal to ${toEmail}.
+    </div>
+  </div>
+</body>
+</html>`;
+    summarySnippet = `Step 2 Completed: ${applicant.fullName} (${trackText})`;
+  }
+
+  // 1. Dispatch via Resend API if configured
+  const resendApiKey = readEnv("RESEND_API_KEY");
+  let dispatchResult = "logged_local";
+
+  if (resendApiKey) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: "Pet Supplies Plus Battle Creek <hiring@battlecreekjobs.app>",
+          to: [toEmail],
+          subject,
+          html: htmlBody
+        })
+      });
+      if (res.ok) {
+        dispatchResult = "dispatched_resend";
+      } else {
+        console.warn(`Resend API returned ${res.status}`);
+        dispatchResult = `resend_error_${res.status}`;
+      }
+    } catch (err) {
+      console.warn("Failed sending via Resend:", err);
+      dispatchResult = "resend_network_error";
+    }
+  }
+
+  // 2. Dispatch via SendGrid API if configured and Resend was not used
+  const sendgridApiKey = readEnv("SENDGRID_API_KEY");
+  if (sendgridApiKey && dispatchResult !== "dispatched_resend") {
+    try {
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sendgridApiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: toEmail }] }],
+          from: { email: "psp0212@petsuppliesplus.com", name: "Pet Supplies Plus Battle Creek" },
+          subject,
+          content: [{ type: "text/html", value: htmlBody }]
+        })
+      });
+      if (res.ok) {
+        dispatchResult = "dispatched_sendgrid";
+      }
+    } catch (err) {
+      console.warn("Failed sending via SendGrid:", err);
+    }
+  }
+
+  // 3. Log notification event into Netlify Blobs for audit trail
+  try {
+    const adminStore = await getReviewStore();
+    const notifId = `notif-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+    await adminStore.setJSON(`notifications/${notifId}.json`, {
+      id: notifId,
+      type,
+      recipient: toEmail,
+      subject,
+      candidateId: applicant.id,
+      candidateName: applicant.fullName,
+      sentAt: new Date().toISOString(),
+      status: dispatchResult,
+      summary: summarySnippet
+    });
+  } catch (logErr) {
+    console.warn("Failed to log notification record in blobs:", logErr);
+  }
+
+  return { dispatched: dispatchResult.startsWith("dispatched"), status: dispatchResult, recipient: toEmail };
 }

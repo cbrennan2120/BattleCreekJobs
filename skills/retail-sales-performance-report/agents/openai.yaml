@@ -1,0 +1,4 @@
+interface:
+  display_name: "Retail Sales Performance Report"
+  short_description: "Builds management-ready Power BI sales reports"
+  default_prompt: "Use $retail-sales-performance-report to export the requested Power BI date range and create a management-ready Excel sales report."

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "netlify dev",
     "serve": "python -m http.server 4173",
-    "check": "node --check app.js && node --check netlify/functions/_lib/hiring-core.mjs && node --check netlify/functions/admin-login.mjs && node --check netlify/functions/admin-logout.mjs && node --check netlify/functions/admin-session.mjs && node --check netlify/functions/admin-health.mjs && node --check netlify/functions/admin-applicants.mjs && node --check netlify/functions/application-intake.mjs && node --check netlify/functions/store-config.mjs",
+    "check": "node --check app.js && node --check level2.js && node --check netlify/functions/_lib/hiring-core.mjs && node --check netlify/functions/admin-login.mjs && node --check netlify/functions/admin-logout.mjs && node --check netlify/functions/admin-session.mjs && node --check netlify/functions/admin-health.mjs && node --check netlify/functions/admin-applicants.mjs && node --check netlify/functions/application-intake.mjs && node --check netlify/functions/level2-intake.mjs && node --check netlify/functions/store-config.mjs",
     "test": "npm run check"
   },
   "keywords": [],

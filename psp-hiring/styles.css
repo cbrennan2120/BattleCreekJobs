@@ -1,21 +1,55 @@
+@font-face {
+  font-family: "Verb Black";
+  src: url("assets/fonts/VerbBlack.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Foco";
+  src: url("assets/fonts/Foco-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Foco";
+  src: url("assets/fonts/Foco-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Foco";
+  src: url("assets/fonts/Foco-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --bg: #f5efe3;
-  --bg-soft: #fcf8f0;
-  --surface: rgba(255, 251, 245, 0.88);
-  --surface-strong: #fffdf8;
-  --text: #17311f;
-  --muted: #5d685d;
-  --line: rgba(17, 50, 29, 0.12);
+  --bg: #f8faf8;
+  --bg-soft: #f4faf5;
+  --surface: rgba(255, 255, 255, 0.96);
+  --surface-strong: #ffffff;
+  --text: #222222;
+  --muted: #64748b;
+  --line: rgba(0, 122, 46, 0.15);
   --green: #00af41;
-  --green-deep: #0f6f32;
-  --green-soft: #dff4e6;
-  --red: #e35b55;
-  --yellow: #f1bc42;
-  --shadow: 0 20px 50px rgba(68, 48, 17, 0.12);
-  --radius-xl: 32px;
-  --radius-lg: 24px;
-  --radius-md: 18px;
-  --radius-sm: 12px;
+  --green-deep: #007a2e;
+  --green-soft: #f4faf5;
+  --red: #e31c21;
+  --yellow: #f6be00;
+  --blue: #0098ce;
+  --purple: #872d91;
+  --shadow: 0 16px 40px rgba(0, 60, 25, 0.08);
+  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
 }
 
 * {
@@ -34,11 +68,37 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(0, 175, 65, 0.08), transparent 28%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(0, 175, 65, 0.05), transparent 30%),
     var(--bg);
   color: var(--text);
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-family: "Foco", Calibri, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Major Display Hero Titles (Verb Black with Foco fallback for full glyph coverage) */
+.hero-copy h1,
+.hero-panel h1,
+.display-headline {
+  font-family: "Verb Black", "Foco", "Arial Black", "Segoe UI Black", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+/* Authentic PSP Headers & Subheads (Foco Bold - Complete 754 character set) */
+h1, h2, h3 {
+  font-family: "Foco", Calibri, "Segoe UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+h4, h5, h6 {
+  font-family: "Foco", Calibri, "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: var(--text);
 }
 
 button,
@@ -65,7 +125,7 @@ a {
 .manager-panel {
   background: var(--surface);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 122, 46, 0.12);
   box-shadow: var(--shadow);
 }
 
@@ -74,79 +134,61 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px 24px;
-  border-radius: 28px;
+  padding: 16px 24px;
+  border-radius: var(--radius-xl);
   margin-bottom: 20px;
 }
 
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .brand-mark {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.brand-logo-stack {
+.brand-logo-img {
+  height: 52px;
+  width: auto;
+  max-width: 190px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 172px;
+  gap: 2px;
 }
 
-.brand-logo-wordmark {
-  display: flex;
-  flex-direction: column;
-  line-height: 0.88;
-}
-
-.brand-logo-line {
-  color: #00b140;
-  font-family: "Arial Black", Impact, sans-serif;
-  font-size: 1.55rem;
+.brand-name {
+  font-family: "Verb Black", "Arial Black", sans-serif;
+  font-size: 1.35rem;
   font-weight: 900;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.brand-logo-line-plus {
-  align-self: center;
-}
-
-.brand-logo-tagline {
+  color: var(--text);
+  line-height: 1.15;
   margin: 0;
-  color: var(--green-deep);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
-.brand-name,
-.brand-tag,
+.brand-tag {
+  color: var(--green-deep);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
 .kicker,
 .eyebrow,
 .hero-card-label,
 .range-label,
 .range-caption {
   margin: 0;
-}
-
-.brand-name {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.7rem;
-  font-weight: 700;
-}
-
-.brand-tag {
-  color: #ca3b36;
-  font-size: 0.92rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .topnav {
@@ -217,6 +259,17 @@ a {
 
 .single-column-layout {
   display: block;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.single-column-layout .application-grid {
+  display: block;
+  width: 100%;
+}
+
+.single-column-layout .form-card {
+  width: 100%;
 }
 
 .admin-gate-shell {
@@ -281,7 +334,8 @@ a {
 .hero-copy h1,
 .section-heading h2,
 .manager-header h2 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Foco", Calibri, "Segoe UI", sans-serif;
+  font-weight: 700;
 }
 
 .hero-copy h1 {
@@ -739,6 +793,189 @@ a {
 .button-inline {
   padding: 10px 14px;
   font-size: 0.95rem;
+}
+
+/* Upfront Reality Check Card */
+.reality-check-card {
+  background: var(--green-soft);
+  border: 2px solid var(--green);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.reality-check-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.reality-check-heading h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--green-deep);
+}
+
+.reality-check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.reality-item {
+  background: #ffffff;
+  border: 1px solid rgba(0, 122, 46, 0.16);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.reality-item strong {
+  display: block;
+  font-size: 1.15rem;
+  color: var(--green-deep);
+  font-family: "Verb Black", "Arial Black", sans-serif;
+}
+
+.reality-item p {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Shift Presets & Tap Targets */
+.shift-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+
+.preset-btn {
+  background: #ffffff;
+  border: 1.5px solid var(--green);
+  color: var(--green-deep);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.preset-btn:hover {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.availability-table td label.shift-tap-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  min-width: 44px;
+  cursor: pointer;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 122, 46, 0.18);
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: all 120ms ease;
+  user-select: none;
+}
+
+.availability-table td label.shift-tap-cell:hover {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.availability-table td label.shift-tap-cell.is-checked {
+  background: var(--green);
+  border-color: var(--green-deep);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 175, 65, 0.25);
+}
+
+.availability-table td label.shift-tap-cell input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Experience Level Selector (First Job Friendly) */
+.experience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.experience-card {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid rgba(0, 122, 46, 0.16);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 140ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.experience-card:hover {
+  border-color: var(--green);
+  background: var(--green-soft);
+}
+
+.experience-card.is-active {
+  border-color: var(--green);
+  background: var(--green-soft);
+  box-shadow: 0 4px 16px rgba(0, 175, 65, 0.15);
+}
+
+.experience-card input[type="radio"] {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+}
+
+.experience-card h4 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: var(--green-deep);
+  padding-right: 24px;
+}
+
+.experience-card p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Internal Growth Callout */
+.growth-callout {
+  background: var(--green-soft);
+  border-left: 4px solid var(--green);
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 14px 0;
+  font-size: 0.92rem;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.growth-callout strong {
+  color: var(--green-deep);
 }
 
 .checkpoint-card {
@@ -1576,7 +1813,8 @@ a {
 .featured-opening-copy h2,
 .coming-soon-note h3 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Foco", Calibri, "Segoe UI", sans-serif;
+  font-weight: 700;
 }
 
 .splash-copy h1 {
@@ -1679,30 +1917,39 @@ a {
   }
 }
 
+/* Printable Scorecard Styles */
+#print-scorecard-area {
+  display: none;
+}
+
 @media print {
-  body {
-    background: white;
-    color: black;
+  @page {
+    size: 8.5in 11in;
+    margin: 0.4in;
   }
-  .topbar, .brand-lockup, .manager-sidebar, .manager-controls, .candidate-list-card, .form-actions, .admin-tabs, #admin-logout-button, .manager-header {
+
+  body.is-printing-scorecard .page-shell,
+  body.is-printing-scorecard header,
+  body.is-printing-scorecard footer {
     display: none !important;
   }
-  .page-shell, .manager-panel, .candidate-detail-container, .manager-layout, .candidate-detail {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: white !important;
+
+  body.is-printing-scorecard #print-scorecard-area {
     display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 10pt;
+    line-height: 1.35;
   }
-  .manager-layout {
-    display: block !important;
-    padding: 0 !important;
-  }
-  .detail-section {
-    break-inside: avoid;
-    page-break-inside: avoid;
+
+  body.is-printing-scorecard .scorecard-container {
+    max-width: 100%;
   }
 }
