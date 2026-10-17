@@ -71,6 +71,58 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Auto-Save Draft to Session Storage
+  const draftKey = `psp_level2_draft_${applicantId || "guest"}`;
+  function saveDraft() {
+    try {
+      const data = {};
+      const elements = form.querySelectorAll("input, textarea, select");
+      elements.forEach((el) => {
+        if (!el.name) return;
+        if (el.type === "radio") {
+          if (el.checked) data[el.name] = el.value;
+        } else if (el.type === "checkbox") {
+          data[`${el.name}_${el.value}`] = el.checked;
+        } else {
+          data[el.name] = el.value;
+        }
+      });
+      sessionStorage.setItem(draftKey, JSON.stringify(data));
+    } catch (e) {
+      // Ignore quota or private browsing storage errors
+    }
+  }
+
+  function restoreDraft() {
+    try {
+      const saved = sessionStorage.getItem(draftKey);
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      Object.entries(data).forEach(([key, val]) => {
+        if (key.includes("_")) {
+          // Checkbox handling
+          const [name, cbVal] = key.split("_");
+          const cb = form.querySelector(`input[name="${name}"][value="${cbVal}"]`);
+          if (cb) cb.checked = Boolean(val);
+        }
+        const field = form.elements[key];
+        if (!field) return;
+        if (field instanceof RadioNodeList) {
+          field.value = val;
+        } else if (field.type !== "file") {
+          if (val && !field.value) field.value = val;
+        }
+      });
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }
+
+  // Restore draft and listen for changes
+  restoreDraft();
+  form.addEventListener("input", saveDraft);
+  form.addEventListener("change", saveDraft);
+
   if (trackPrior) trackPrior.addEventListener("change", updateTrack);
   if (trackFirst) trackFirst.addEventListener("change", updateTrack);
   updateTrack();
@@ -151,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Success
+      try { sessionStorage.removeItem(draftKey); } catch (e) {}
       if (candidateGreetingCard) candidateGreetingCard.style.display = "none";
       if (formContainer) formContainer.style.display = "none";
       if (submissionBanner) {
@@ -181,6 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       // Display success to candidate
+      try { sessionStorage.removeItem(draftKey); } catch (e) {}
       if (candidateGreetingCard) candidateGreetingCard.style.display = "none";
       if (formContainer) formContainer.style.display = "none";
       if (submissionBanner) {

@@ -1313,15 +1313,16 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
       <section class="detail-section">
         <h4>Email & scheduling actions</h4>
         <div class="template-box compact-template-actions">
-          <p>1-click actions to contact the candidate and schedule interviews via Google Calendar.</p>
+          <p>1-click actions to contact the candidate via Outlook or default mail client, copy templates, and book interviews.</p>
           <div class="form-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="button button-primary" type="button" id="open-calendar-link" style="background: var(--green); border-color: var(--green);">Book on Google Calendar</button>
+            <button class="button button-primary" type="button" id="open-level2-email" style="background: var(--blue); border-color: var(--blue);">Send Step 2 Invite via Outlook</button>
+            <button class="button button-primary" type="button" id="open-invite-email" style="background: var(--green); border-color: var(--green);">Send Interview Invite via Outlook</button>
+            <button class="button button-secondary" type="button" id="open-calendar-link">Book on Google Calendar</button>
             <button class="button button-secondary" type="button" id="print-scorecard">Print Interview Scorecard</button>
-            <button class="button button-primary" type="button" id="open-invite-email">Open Interview Email</button>
-            <button class="button button-secondary" type="button" id="copy-invite-message">Copy Interview Message</button>
-            <button class="button button-secondary" type="button" id="copy-level2-message">Copy Step 2 Invite Message</button>
+            <button class="button button-secondary" type="button" id="copy-level2-message">Copy Step 2 Message</button>
             <button class="button button-secondary" type="button" id="copy-level2-link">Copy Step 2 Link</button>
-            <button class="button button-secondary" type="button" id="open-decline-email">Open Decline Email</button>
+            <button class="button button-secondary" type="button" id="copy-invite-message">Copy Interview Message</button>
+            <button class="button button-secondary" type="button" id="open-decline-email">Send Decline Email via Outlook</button>
             <button class="button button-secondary" type="button" id="copy-decline-message">Copy Decline Message</button>
           </div>
         </div>
@@ -1337,6 +1338,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
   document.getElementById("delete-candidate")?.addEventListener("click", async () => deleteCandidate(selectedApplicantId, candidate.fullName));
   document.getElementById("open-calendar-link")?.addEventListener("click", () => window.open(storeConfig.schedulingLink || DEFAULT_STORE_CONFIG.schedulingLink, "_blank"));
   document.getElementById("print-scorecard")?.addEventListener("click", () => printCandidateScorecard(candidate));
+  document.getElementById("open-level2-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, `Pet Supplies Plus Battle Creek - Next Step (Full Application)`, buildLevel2InviteMessage(candidate))));
   document.getElementById("open-invite-email")?.addEventListener("click", () => openMailto(buildMailtoLink(candidate.email, buildInviteSubject(candidate), buildInviteMessage(candidate))));
   document.getElementById("copy-invite-message")?.addEventListener("click", () => copyTextToClipboard(buildInviteMessage(candidate)));
   document.getElementById("copy-level2-link")?.addEventListener("click", () => copyTextToClipboard(level2Url));
