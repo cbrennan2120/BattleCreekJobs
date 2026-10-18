@@ -60,6 +60,28 @@
                 <input type="hidden" id="prefillEmail" name="email" value="">
                 <input type="hidden" id="prefillPhone" name="phone" value="">
 
+                <!-- Contact Information (Shown if unlinked / parameters missing) -->
+                <div class="step-section" id="contact-verification-section" style="display: none; margin-bottom: 24px;">
+                  <div class="section-callout" style="background: rgba(0, 175, 65, 0.08); border-left: 4px solid var(--green);">
+                    <h4>Candidate Contact Verification</h4>
+                    <p>Please confirm your contact details below so your Step 2 responses link directly to your Store #0212 application profile.</p>
+                  </div>
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="contactFullName">Your Full Name <span style="color: var(--red);">*</span></label>
+                      <input id="contactFullName" type="text" placeholder="First and Last Name">
+                    </div>
+                    <div class="field">
+                      <label for="contactEmail">Your Email Address <span style="color: var(--red);">*</span></label>
+                      <input id="contactEmail" type="email" placeholder="name@example.com">
+                    </div>
+                    <div class="field" style="grid-column: 1 / -1;">
+                      <label for="contactPhone">Mobile Phone Number <span style="color: var(--red);">*</span></label>
+                      <input id="contactPhone" type="tel" placeholder="(269) 555-0123">
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Section 1: Education & Experience Track -->
                 <div class="step-section">
                   <div class="section-callout">

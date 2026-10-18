@@ -737,6 +737,16 @@ function validateStep() {
       window.alert("Complete the basic contact details before continuing.");
       return false;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(formState.email).trim())) {
+      window.alert("Please enter a valid email address (e.g. name@example.com).");
+      return false;
+    }
+    const cleanPhone = String(formState.phone).replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      window.alert("Please enter a valid 10-digit mobile phone number.");
+      return false;
+    }
   }
 
   if (stepId === "availability") {
@@ -781,38 +791,53 @@ function previewFitState() {
 }
 
 async function submitApplication() {
-  const scored = scoreApplication(formState);
-  const applicant = {
-    id: crypto.randomUUID(),
-    submittedAt: new Date().toISOString(),
-    stage: "new",
-    managerNote: "",
-    fullName: `${formState.firstName} ${formState.lastName}`.trim(),
-    email: formState.email,
-    phone: formState.phone,
-    city: formState.city,
-    experienceLevel: formState.experienceLevel || "first_job",
-    position: formState.position,
-    ageBand: formState.ageBand,
-    authorized: formState.authorized,
-    hoursWanted: formState.hoursWanted,
-    minimumHoursNeeded: Number(formState.minimumHoursNeeded),
-    startDate: formState.startDate,
-    expectedPay: formState.payComfort === "yes" ? Number(storeConfig.payMax) : Number(storeConfig.payMax) + 0.01,
-    payComfort: formState.payComfort,
-    canLift: formState.canLift,
-    enjoysRetail: formState.enjoysRetail,
-    whyWorkHere: formState.whyWorkHere.trim(),
-    serviceExample: formState.serviceExample.trim(),
-    availability: structuredClone(formState.availability),
-    ...scored
-  };
+  if (nextStepButton) {
+    if (nextStepButton.disabled) return;
+    nextStepButton.disabled = true;
+    nextStepButton.textContent = "Submitting application...";
+  }
 
-  await submitLiveApplication(applicant);
-  const submittedId = applicant.id;
-  resetForm(false);
-  showSubmissionBanner(submittedId);
-  document.getElementById("application")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  try {
+    const scored = scoreApplication(formState);
+    const applicant = {
+      id: crypto.randomUUID(),
+      submittedAt: new Date().toISOString(),
+      stage: "new",
+      managerNote: "",
+      fullName: `${formState.firstName} ${formState.lastName}`.trim(),
+      email: formState.email,
+      phone: formState.phone,
+      city: formState.city,
+      experienceLevel: formState.experienceLevel || "first_job",
+      position: formState.position,
+      ageBand: formState.ageBand,
+      authorized: formState.authorized,
+      hoursWanted: formState.hoursWanted,
+      minimumHoursNeeded: Number(formState.minimumHoursNeeded),
+      startDate: formState.startDate,
+      expectedPay: formState.payComfort === "yes" ? Number(storeConfig.payMax) : Number(storeConfig.payMax) + 0.01,
+      payComfort: formState.payComfort,
+      canLift: formState.canLift,
+      enjoysRetail: formState.enjoysRetail,
+      whyWorkHere: formState.whyWorkHere.trim(),
+      serviceExample: formState.serviceExample.trim(),
+      availability: structuredClone(formState.availability),
+      ...scored
+    };
+
+    await submitLiveApplication(applicant);
+    const submittedId = applicant.id;
+    resetForm(false);
+    showSubmissionBanner(submittedId);
+    document.getElementById("application")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    console.error("Submission failed:", err);
+    window.alert("There was a temporary network issue submitting your application. Please try again.");
+    if (nextStepButton) {
+      nextStepButton.disabled = false;
+      nextStepButton.textContent = "Submit Application";
+    }
+  }
 }
 
 function scoreApplication(candidate) {
@@ -1236,7 +1261,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
         <article class="detail-metric">
           <span>Pay fit</span>
           <strong>${escapeHtml(candidate.payFitLabel)}</strong>
-          <p>Expected $${candidate.expectedPay.toFixed(2)} / hr</p>
+          <p>Expected $${Number(candidate.expectedPay || storeConfig.payMin || 13.73).toFixed(2)} / hr</p>
         </article>
       </div>
 
@@ -1263,7 +1288,7 @@ function renderSelectedApplicant(filteredApplicants = applicants) {
           <li>Role applied for: <strong>${escapeHtml(candidate.position)}</strong></li>
           <li>Email: ${escapeHtml(candidate.email)}</li>
           <li>Phone: ${escapeHtml(candidate.phone || "Not provided")}</li>
-          <li>Starting pay expectation: $${candidate.expectedPay.toFixed(2)} / hr (Base rate $13.73/hr)</li>
+          <li>Starting pay expectation: $${Number(candidate.expectedPay || storeConfig.payMin || 13.73).toFixed(2)} / hr (Base rate $13.73/hr)</li>
           <li>Experience profile: ${candidate.experienceLevel === "first_job" ? "🌱 First-Time Job / Student" : "💼 Experienced Candidate"}</li>
           <li>Hours wanted: ${escapeHtml(candidate.hoursWanted)} (Minimum weekly needed: ${candidate.minimumHoursNeeded || 12} hrs)</li>
           <li>Employment type: ${escapeHtml(storeConfig.employmentType || "Part-time (12-35 hrs/wk)")}</li>
@@ -2078,7 +2103,10 @@ function downloadFile(filename, content, mimeType) {
 }
 
 function csvEscape(value) {
-  const safe = String(value ?? "").replace(/"/g, '""');
+  let safe = String(value ?? "").replace(/"/g, '""');
+  if (/^[=+@-]/.test(safe)) {
+    safe = `'${safe}`;
+  }
   return `"${safe}"`;
 }
 

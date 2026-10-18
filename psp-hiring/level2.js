@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const signatureDateInput = document.getElementById("signatureDate");
   const submitButton = document.getElementById("submit-level2");
 
+  // Contact verification elements (for unlinked visitors)
+  const contactVerificationSection = document.getElementById("contact-verification-section");
+  const contactFullName = document.getElementById("contactFullName");
+  const contactEmail = document.getElementById("contactEmail");
+  const contactPhone = document.getElementById("contactPhone");
+
   // Track toggles
   const trackPrior = document.getElementById("track-prior");
   const trackFirst = document.getElementById("track-first");
@@ -39,6 +45,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (applicantEmail) prefillEmailInput.value = applicantEmail;
   if (applicantPhone) prefillPhoneInput.value = applicantPhone;
+
+  // If visitor is unlinked (no ID or email in URL), display contact verification fields
+  if (!applicantId && !applicantEmail) {
+    if (contactVerificationSection) contactVerificationSection.style.display = "block";
+    if (contactFullName) contactFullName.required = true;
+    if (contactEmail) contactEmail.required = true;
+    if (contactPhone) contactPhone.required = true;
+    if (candidateGreeting) candidateGreeting.textContent = "Welcome to Step 2!";
+    const candidateSubtitle = document.getElementById("candidate-subtitle");
+    if (candidateSubtitle) {
+      candidateSubtitle.textContent = "Thank you for applying to Pet Supplies Plus Battle Creek (Store #0212). Please verify your contact information and complete your background details below.";
+    }
+  }
 
   // Set default date to today
   if (signatureDateInput && !signatureDateInput.value) {
@@ -136,6 +155,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    if (!applicantId && !applicantEmail) {
+      const emailVal = contactEmail ? contactEmail.value.trim() : "";
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailVal)) {
+        window.alert("Please enter a valid email address so we can link your Step 2 responses to your application.");
+        if (contactEmail) contactEmail.focus();
+        return;
+      }
+    }
+
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.textContent = "Submitting Step 2...";
@@ -183,11 +212,15 @@ document.addEventListener("DOMContentLoaded", () => {
       submittedAt: new Date().toISOString()
     };
 
+    const resolvedName = (contactFullName && contactFullName.value.trim()) || formData.get("fullName") || applicantName;
+    const resolvedEmail = (contactEmail && contactEmail.value.trim()) || formData.get("email") || applicantEmail;
+    const resolvedPhone = (contactPhone && contactPhone.value.trim()) || formData.get("phone") || applicantPhone;
+
     const requestBody = {
       applicantId: formData.get("applicantId") || applicantId,
-      fullName: formData.get("fullName") || applicantName,
-      email: formData.get("email") || applicantEmail,
-      phone: formData.get("phone") || applicantPhone,
+      fullName: resolvedName,
+      email: resolvedEmail,
+      phone: resolvedPhone,
       level2: level2Payload
     };
 
