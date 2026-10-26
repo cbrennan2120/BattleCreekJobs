@@ -432,7 +432,7 @@ function renderRoleSummary(position) {
 
 function renderAvailabilityStep() {
   return `
-    <div class="helper-banner">We ask about schedule early so you can see whether this opening matches the hours you want. Saturday and Sunday coverage is required for retail store operations; evenings are preferred.</div>
+    <div class="helper-banner">Weekend coverage is essential for retail store operations. Having regular availability on Saturday, Sunday, or weekend evenings is key to joining our team.</div>
     <div class="field-grid triple">
       <div class="field">
         <label for="hoursWanted">How many hours per week are you seeking?</label>
@@ -497,18 +497,18 @@ function renderPayStep() {
   return `
     <div class="reality-check-card">
       <div class="reality-check-heading">
-        <p class="eyebrow">Compensation & Growth</p>
+        <p class="eyebrow">Starting Pay & Perks</p>
         <h3>Pet Supplies Plus Battle Creek Starting Pay</h3>
       </div>
-      <p style="margin: 0; color: var(--text);">We share our pay and growth schedule early so you have full clarity before taking the time to interview.</p>
+      <p style="margin: 0; color: var(--text);">We share our starting pay and store perks early so you have full clarity before taking the time to interview.</p>
       <div class="reality-check-grid">
         <div class="reality-item">
           <strong>$${Number(storeConfig.payMin).toFixed(2)} / hr</strong>
-          <p>Starting base rate (Michigan minimum wage starting rate).</p>
+          <p>Firm starting base rate for all new store team members.</p>
         </div>
         <div class="reality-item">
-          <strong>Raises Twice A Year</strong>
-          <p>Eligible for biannual reviews with raises up to 5% based on reliability & performance.</p>
+          <strong>Generous Employee Discounts</strong>
+          <p>Save on pet food, treats, toys, and store supplies.</p>
         </div>
         <div class="reality-item">
           <strong>Part-Time (${storeConfig.minimumHoursNeeded}-${storeConfig.maximumHoursOffered} hrs)</strong>
@@ -523,7 +523,7 @@ function renderPayStep() {
           <input id="payComfort-yes" type="radio" name="payComfort" value="yes" ${formState.payComfort === "yes" ? "checked" : ""}>
           <span>
             <h4>Yes, this starting pay and schedule work for me</h4>
-            <p>I understand the starting rate is $${Number(storeConfig.payMin).toFixed(2)}/hr with biannual reviews and raises up to 5%.</p>
+            <p>I understand the starting rate is $${Number(storeConfig.payMin).toFixed(2)}/hr and includes generous employee discounts.</p>
           </span>
         </label>
         <label class="choice-card" for="payComfort-no">
@@ -592,10 +592,12 @@ function renderFitStep() {
     </div>
     <div class="field">
       <label for="whyWorkHere">Why would you like to work at ${escapeHtml(storeConfig.name)}?</label>
+      <small style="display: block; margin-top: -4px; margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;">Hint: Keep it brief! 1&ndash;2 sentences about your love for pets or helping neighbors is plenty.</small>
       <textarea id="whyWorkHere" name="whyWorkHere" placeholder="Tell us what draws you to pets, our neighbors, or joining our store team.">${escapeHtml(formState.whyWorkHere)}</textarea>
     </div>
     <div class="field">
       <label for="serviceExample">Tell us about a time you helped someone, worked hard on a team, or stayed dependable.</label>
+      <small style="display: block; margin-top: -4px; margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;">Hint: A quick 1&ndash;2 sentences from school, a past job, sports, or helping family works great.</small>
       <textarea id="serviceExample" name="serviceExample" placeholder="Can be from a previous job, school, sport, club, volunteer work, or helping family/neighbors.">${escapeHtml(formState.serviceExample)}</textarea>
     </div>
   `;
@@ -615,7 +617,7 @@ function renderReviewStep() {
         <li>Role selected: ${escapeHtml(formState.position || "Not selected")}</li>
         <li>Experience track: ${escapeHtml(expLabel)}</li>
         <li>Hours wanted: ${escapeHtml(formState.hoursWanted || "Not set")} (Min ${escapeHtml(formState.minimumHoursNeeded || "?")} hrs/wk)</li>
-        <li>Starting pay ($13.73/hr + biannual raises): ${formState.payComfort === "yes" ? "Confirmed" : formState.payComfort === "no" ? "Needs higher starting rate" : "Not confirmed"}</li>
+        <li>Starting pay ($13.73/hr + generous employee discounts): ${formState.payComfort === "yes" ? "Confirmed" : formState.payComfort === "no" ? "Needs higher starting rate" : "Not confirmed"}</li>
       </ul>
     </div>
     <div class="field-grid">
