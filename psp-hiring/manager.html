@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Supplies Plus Battle Creek - Store #0212 Manager Portal</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Manager Portal Specific Enhancements */
+    .manager-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .stat-card .stat-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-family: "Verb Black", system-ui, sans-serif;
+      color: var(--green-deep);
+      line-height: 1.1;
+    }
+    .stat-card.stat-inactive .stat-value {
+      color: var(--muted);
+    }
+
+    .roster-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .roster-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .roster-search-box {
+      flex: 1;
+      min-width: 260px;
+      max-width: 420px;
+    }
+    .roster-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Roster Table */
+    .roster-table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+    }
+    .roster-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    .roster-table th {
+      background: var(--bg-soft);
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border-bottom: 2px solid var(--line);
+      white-space: nowrap;
+    }
+    .roster-table td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(0, 122, 46, 0.08);
+      vertical-align: middle;
+    }
+    .roster-row:hover {
+      background: #fbfdfb;
+    }
+    .roster-row.inactive-row {
+      background: #fcfcfc;
+      opacity: 0.75;
+    }
+    .roster-row.inactive-row:hover {
+      opacity: 1;
+      background: #f8f8f8;
+    }
+
+    .cell-name strong {
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    .alias-pill {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 4px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+    .tm-badge {
+      display: inline-block;
+      font-weight: 700;
+      color: var(--green-deep);
+      background: rgba(0, 175, 65, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .phone-link {
+      color: var(--green-deep);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .phone-link:hover {
+      text-decoration: underline;
+    }
+    .role-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(0, 122, 46, 0.08);
+      color: var(--green-deep);
+    }
+    .role-shift-leader, .role-store-team-leader, .role-assistant-team-leader {
+      background: rgba(135, 45, 145, 0.12);
+      color: #72207b;
+    }
+    .role-groomer {
+      background: rgba(0, 152, 206, 0.12);
+      color: #00739c;
+    }
+    .role-stock-team-member {
+      background: rgba(246, 190, 0, 0.15);
+      color: #8c6a00;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .status-pill.active-pill {
+      background: rgba(0, 175, 65, 0.15);
+      color: var(--green-deep);
+    }
+    .status-pill.inactive-pill {
+      background: rgba(0, 0, 0, 0.08);
+      color: var(--muted);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .status-dot.green { background: var(--green); }
+    .status-dot.gray { background: var(--muted); }
+
+    .cell-notes {
+      color: var(--muted);
+      font-size: 0.85rem;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .cell-actions {
+      white-space: nowrap;
+      text-align: right;
+    }
+    .button-action {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      margin-left: 4px;
+    }
+    .button-action:hover {
+      background: var(--bg-soft);
+    }
+    .button-deactivate {
+      color: #b91c1c;
+      border-color: rgba(185, 28, 28, 0.25);
+    }
+    .button-deactivate:hover {
+      background: rgba(227, 28, 33, 0.08);
+    }
+    .button-reactivate {
+      color: var(--green-deep);
+      border-color: rgba(0, 175, 65, 0.3);
+    }
+    .button-reactivate:hover {
+      background: rgba(0, 175, 65, 0.1);
+    }
+    .button-edit {
+      color: var(--text);
+    }
+    .button-delete {
+      color: var(--muted);
+      font-size: 1.1rem;
+      line-height: 0.8;
+      padding: 5px 8px;
+    }
+    .button-delete:hover {
+      color: var(--red);
+      background: rgba(227, 28, 33, 0.1);
+    }
+
+    /* Modal Overlay */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 30, 10, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+    .modal-backdrop[hidden] {
+      display: none;
+    }
+    .modal-box {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 20px 24px;
+      background: var(--bg-soft);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-family: "Verb Black", system-ui, sans-serif;
+      color: var(--green-deep);
+      font-size: 1.3rem;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+    }
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    .modal-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      background: var(--bg-soft);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast Notification */
+    .portal-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #222222;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+    .portal-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .portal-toast.success {
+      background: var(--green-deep);
+      border-left: 4px solid var(--green);
+    }
+    .portal-toast.error {
+      background: #991b1b;
+      border-left: 4px solid var(--red);
+    }
+    .portal-toast.info {
+      background: #1e293b;
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <a href="/" class="brand-mark" aria-label="Pet Supplies Plus Battle Creek Home">
+          <img src="assets/psp-logo-white-on-green.png" alt="Pet Supplies Plus" class="brand-logo-img">
+        </a>
+        <div class="brand-info">
+          <p class="brand-name">Pet Supplies Plus Battle Creek</p>
+          <p class="brand-tag">Store #0212 &bull; Master Manager Portal</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a class="button button-secondary" href="/admin.html">Hiring Applicants</a>
+        <a class="button button-secondary" href="/index.html" target="_blank">Step 1 Public Form</a>
+        <a class="button button-secondary" href="/PSPNewHire/Orientation/" target="_blank">Orientation Slides</a>
+      </div>
+    </header>
+
+    <main class="single-column-layout">
+      <!-- Manager Access Code Gate -->
+      <section class="admin-gate-shell" id="admin-gate-shell">
+        <section class="card admin-gate-card" id="admin-gate-card">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Manager Access Required</p>
+              <h2>Store #0212 Operations Portal</h2>
+            </div>
+          </div>
+          <p class="manager-subtitle">This portal manages store staff rosters, scheduling sync, and onboarding operations. Enter the store manager code to continue.</p>
+          <form id="admin-login-form" class="settings-form">
+            <div class="field">
+              <label for="admin-access-code">Store Manager Code</label>
+              <input id="admin-access-code" name="admin-access-code" type="password" placeholder="Enter manager code" autocomplete="current-password" required>
+            </div>
+            <div class="form-actions">
+              <button class="button button-primary" type="submit">Unlock Manager Portal</button>
+            </div>
+          </form>
+          <p class="inline-note" id="admin-gate-note">Use the current store manager code to unlock.</p>
+        </section>
+      </section>
+
+      <!-- Main Manager Dashboard -->
+      <div class="manager-column" id="manager-portal" hidden>
+        <!-- Top Stats Row -->
+        <div class="manager-stat-grid">
+          <div class="stat-card">
+            <span class="stat-label">Active Team Members</span>
+            <span class="stat-value" id="stat-active-count">0</span>
+          </div>
+          <div class="stat-card stat-inactive">
+            <span class="stat-label">Inactive / On Leave</span>
+            <span class="stat-value" id="stat-inactive-count">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Total Store Staff</span>
+            <span class="stat-value" id="stat-total-staff">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Directory &amp; Partners</span>
+            <span class="stat-value" id="stat-directory-count">0</span>
+          </div>
+        </div>
+
+        <!-- Roster Management Card -->
+        <section class="roster-card">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">Store #0212 Operations</p>
+              <h2>Team Roster &amp; Contact Management</h2>
+              <p class="manager-subtitle">Single source of truth for store team member numbers, contact details, active/inactive scheduling status, and franchise contacts.</p>
+            </div>
+            <div class="topbar-actions">
+              <button class="button button-primary" type="button" id="btn-add-member">+ Add Team Member</button>
+              <button class="button button-secondary" type="button" id="admin-logout">Log out</button>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <nav class="admin-tabs" aria-label="Roster Filter Tabs" style="margin-top: 16px;">
+            <button class="admin-tab active" type="button" data-roster-tab="active">Active Team Members</button>
+            <button class="admin-tab" type="button" data-roster-tab="inactive">Inactive / Archived</button>
+            <button class="admin-tab" type="button" data-roster-tab="all">All Store Staff</button>
+            <button class="admin-tab" type="button" data-roster-tab="directory">Directory &amp; Partners</button>
+          </nav>
+
+          <!-- Toolbar: Search & Action Buttons -->
+          <div class="roster-toolbar" style="margin-top: 20px;">
+            <div class="roster-search-box field" style="margin-bottom: 0;">
+              <input id="roster-search" type="search" placeholder="Search by name, #, phone, or role...">
+            </div>
+            <div class="roster-actions">
+              <button class="button button-secondary" type="button" id="btn-export-csv">Export CSV</button>
+              <button class="button button-secondary" type="button" id="btn-export-json">Export JSON</button>
+              <button class="button button-secondary" type="button" id="btn-refresh-roster" title="Reload from server">&#x21bb; Refresh</button>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="roster-table-wrapper">
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th>Team Member</th>
+                  <th>TM #</th>
+                  <th>Phone Number</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th style="text-align: right;">Roster Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roster-tbody">
+                <!-- Injected dynamically via manager.js -->
+              </tbody>
+            </table>
+            <div class="empty-state" id="roster-empty-state" hidden>
+              <p>No team members found matching the current search or filter.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div class="modal-backdrop" id="member-modal" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Team Member</h3>
+        <button type="button" class="modal-close-btn" id="modal-close-btn">&times;</button>
+      </div>
+      <form id="member-form">
+        <div class="modal-body">
+          <div class="field">
+            <label for="modal-category">Category</label>
+            <select id="modal-category" name="category" required>
+              <option value="Team Member">Team Member (Store #0212)</option>
+              <option value="Store">Sister Store Contact</option>
+              <option value="District / Property">District / Property Support</option>
+              <option value="Support">Store Support / Delivery Van</option>
+              <option value="Contact">Franchise Leadership / Payroll</option>
+            </select>
+          </div>
+
+          <div class="modal-grid-2">
+            <div class="field">
+              <label for="modal-name">Name Tag Name <span style="color: var(--red);">*</span></label>
+              <input id="modal-name" name="name" placeholder="e.g. Bri" required>
+            </div>
+            <div class="field">
+              <label for="modal-legal-name">Legal Name (Alias)</label>
+              <input id="modal-legal-name" name="legalName" placeholder="e.g. Brianna">
+            </div>
+          </div>
+
+          <div class="modal-grid-2">
+            <div class="field">
+              <label for="modal-tm-number">Team Member #</label>
+              <input id="modal-tm-number" name="teamMemberNumber" placeholder="e.g. 75">
+            </div>
+            <div class="field">
+              <label for="modal-phone">Phone Number</label>
+              <input id="modal-phone" name="phone" type="tel" placeholder="e.g. 269-213-7031">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="modal-role">Role / Position</label>
+            <select id="modal-role" name="role">
+              <option value="Cashier Team Member">Cashier Team Member</option>
+              <option value="Stock Team Member">Stock Team Member</option>
+              <option value="Shift Leader">Shift Leader</option>
+              <option value="Assistant Team Leader">Assistant Team Leader</option>
+              <option value="Store Team Leader">Store Team Leader</option>
+              <option value="Groomer">Groomer</option>
+              <option value="Bather">Bather</option>
+              <option value="Sister Store">Sister Store</option>
+              <option value="Leadership">Franchise Leadership</option>
+              <option value="Other">Other / Support</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="modal-notes">Roster Notes &amp; Availability</label>
+            <input id="modal-notes" name="notes" placeholder="e.g. Student, closes weekends, keyholder">
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            <input type="checkbox" id="modal-active" name="active" checked style="width: auto;">
+            <label for="modal-active" style="margin-bottom: 0; cursor: pointer; font-weight: 600;">Active for Weekly Scheduling</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="button button-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="button button-primary" id="modal-save-btn">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="portal-toast" id="portal-toast"></div>
+
+  <script src="manager.js"></script>
+</body>
+</html>
