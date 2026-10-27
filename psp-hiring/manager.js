@@ -671,6 +671,16 @@
     });
   }
 
+  function formatMaskedSSN(rawSSN) {
+    if (!rawSSN) return "[Provided on I-9 / attachment]";
+    const digits = String(rawSSN).replace(/\D/g, "");
+    if (digits.length >= 4) {
+      const last4 = digits.slice(-4);
+      return `XXX - XX - ${last4}`;
+    }
+    return String(rawSSN).includes("XXX") ? String(rawSSN) : `XXX - XX - ${rawSSN}`;
+  }
+
   function generateRobynEmailText(data) {
     return `To: robynmsu2@yahoo.com
 CC: brandon.byron@gmail.com
@@ -696,7 +706,7 @@ EMPLOYEE INFORMATION:
 • Emergency Contact: ${data.emergencyContact || "N/A"}
 
 CONFIDENTIAL PAYROLL & DIRECT DEPOSIT:
-• SSN#: ${data.ssn || "[Provided on I-9 / attachment]"}
+• S S : ${formatMaskedSSN(data.ssn)}
 • Payment Preference: ${data.depositType}
 • Bank / Credit Union: ${data.bankName || "N/A"}
 • Routing #: ${data.routingNumber || "N/A"}
