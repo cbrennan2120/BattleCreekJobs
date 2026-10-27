@@ -9,6 +9,8 @@
     activeTab: "active", // "active" | "inactive" | "all" | "directory"
     searchQuery: "",
     editingId: null,
+    currentEditingMember: null,
+    lastOnboardedData: null,
     toastTimeout: null
   };
 
@@ -43,6 +45,7 @@
   const emailPreviewContent = document.getElementById("email-preview-content");
   const btnOpenEmailClient = document.getElementById("btn-open-email-client");
   const btnCopyGeneratedEmail = document.getElementById("btn-copy-generated-email");
+  const btnDownloadReviewIcs = document.getElementById("btn-download-review-ics");
   const btnBackToRoster = document.getElementById("btn-back-to-roster");
 
   // Filter Elements
@@ -63,6 +66,7 @@
   const modalTitle = document.getElementById("modal-title");
   const modalCancelBtn = document.getElementById("modal-cancel-btn");
   const modalCloseBtn = document.getElementById("modal-close-btn");
+  const modalIcsBtn = document.getElementById("modal-ics-btn");
 
   // Form Fields
   const inputCategory = document.getElementById("modal-category");
@@ -311,6 +315,21 @@
       delBtn.title = "Delete record permanently";
       delBtn.addEventListener("click", () => deleteMember(member));
 
+      // Review Invites button (for store staff)
+      if (member.category === "Team Member" || !member.category) {
+        const calBtn = document.createElement("button");
+        calBtn.type = "button";
+        calBtn.className = "button-action button-cal";
+        calBtn.textContent = "📅";
+        calBtn.title = `Download 30 & 60-day Outlook review invites for ${member.name}`;
+        calBtn.addEventListener("click", () => {
+          const hDate = extractHireDate(member);
+          generateReviewIcs(member.name, member.role, hDate);
+          showToast(`Downloaded Outlook review invites for ${member.name}.`, "success");
+        });
+        tdActions.appendChild(calBtn);
+      }
+
       tdActions.appendChild(toggleBtn);
       tdActions.appendChild(editBtn);
       tdActions.appendChild(delBtn);
@@ -385,6 +404,8 @@
   // --- Modal Management ---
   function openAddModal() {
     state.editingId = null;
+    state.currentEditingMember = null;
+    if (modalIcsBtn) modalIcsBtn.hidden = true;
     modalTitle.textContent = "Add Contact / Team Member";
     memberForm.reset();
     inputCategory.value = "Team Member";
@@ -396,6 +417,8 @@
 
   function openEditModal(member) {
     state.editingId = member.id;
+    state.currentEditingMember = member;
+    if (modalIcsBtn) modalIcsBtn.hidden = (member.category !== "Team Member" && !!member.category);
     modalTitle.textContent = `Edit Details: ${member.name}`;
     inputCategory.value = member.category || "Team Member";
     inputName.value = member.name || "";
@@ -658,6 +681,105 @@
     downloadBlob(xml, filename, "application/vnd.ms-excel;charset=utf-8;");
   }
 
+  function extractHireDate(member) {
+    if (member.hireDate) return member.hireDate;
+    if (member.notes) {
+      const match = member.notes.match(/Hired:\s*(\d{4}-\d{2}-\d{2})/i);
+      if (match) return match[1];
+    }
+    return formatDateYmd(new Date());
+  }
+
+  function generateReviewIcs(name, role, hireDateStr) {
+    let hDate = new Date();
+    if (hireDateStr) {
+      const parts = hireDateStr.split("-");
+      if (parts.length === 3) {
+        hDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      } else {
+        const parsed = new Date(hireDateStr);
+        if (!isNaN(parsed.getTime())) hDate = parsed;
+      }
+    }
+
+    // 30-Day Review Date (2:00 PM - 2:30 PM)
+    const date30 = new Date(hDate);
+    date30.setDate(date30.getDate() + 30);
+    date30.setHours(14, 0, 0, 0);
+    const end30 = new Date(date30);
+    end30.setMinutes(end30.getMinutes() + 30);
+
+    // 60-Day Review Date (2:00 PM - 2:30 PM)
+    const date60 = new Date(hDate);
+    date60.setDate(date60.getDate() + 60);
+    date60.setHours(14, 0, 0, 0);
+    const end60 = new Date(date60);
+    end60.setMinutes(end60.getMinutes() + 30);
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatIcsDateTime(d) {
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    }
+
+    const nowStamp = formatIcsDateTime(new Date()) + "Z";
+    const start30 = formatIcsDateTime(date30);
+    const end30Str = formatIcsDateTime(end30);
+    const start60 = formatIcsDateTime(date60);
+    const end60Str = formatIcsDateTime(end60);
+
+    const cleanName = (name || "Team Member").trim();
+    const safeRole = role || "Team Member";
+    const safeId = cleanName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const icsLines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Pet Supplies Plus Store 0212//Review Automation//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "X-WR-CALNAME:Store 0212 Performance Reviews",
+      "X-WR-TIMEZONE:America/Detroit",
+      "BEGIN:VEVENT",
+      `UID:psp0212-30day-${safeId}-${Date.now()}@battlecreekjobs.app`,
+      `DTSTAMP:${nowStamp}`,
+      `DTSTART:${start30}`,
+      `DTEND:${end30Str}`,
+      `SUMMARY:30-Day Check-in & Review: ${cleanName} (Store #0212)`,
+      `DESCRIPTION:30-Day performance check-in for ${cleanName} (${safeRole}).\\n\\nStore #0212 - Battle Creek\\nReview Topics:\\n• 30-day attendance & punctuality check\\n• Register accuracy & Beyond Hello customer engagement\\n• Pet care, live animal & stocking execution\\n• Questions and feedback with Store Team Leader`,
+      "LOCATION:Pet Supplies Plus Store #0212 - 1791 W Columbia Ave, Battle Creek, MI 49015",
+      "STATUS:CONFIRMED",
+      "BEGIN:VALARM",
+      "TRIGGER:-P2D",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:Reminder: 30-Day Review for ${cleanName} in 2 days`,
+      "END:VALARM",
+      "END:VEVENT",
+      "BEGIN:VEVENT",
+      `UID:psp0212-60day-${safeId}-${Date.now()}@battlecreekjobs.app`,
+      `DTSTAMP:${nowStamp}`,
+      `DTSTART:${start60}`,
+      `DTEND:${end60Str}`,
+      `SUMMARY:60-Day Performance Evaluation: ${cleanName} (Store #0212)`,
+      `DESCRIPTION:60-Day formal performance evaluation for ${cleanName} (${safeRole}).\\n\\nStore #0212 - Battle Creek\\nReview Topics:\\n• Complete formal PSP 30/60 Day Review Form\\n• Independent shift task execution & speed\\n• Review semi-annual performance raise eligibility`,
+      "LOCATION:Pet Supplies Plus Store #0212 - 1791 W Columbia Ave, Battle Creek, MI 49015",
+      "STATUS:CONFIRMED",
+      "BEGIN:VALARM",
+      "TRIGGER:-P2D",
+      "ACTION:DISPLAY",
+      `DESCRIPTION:Reminder: 60-Day Review for ${cleanName} in 2 days`,
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+
+    const icsBody = icsLines.join("\r\n");
+    const filename = `PSP_0212_Reviews_${cleanName.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+    downloadBlob(icsBody, filename, "text/calendar;charset=utf-8;");
+  }
+
   function escapeXml(unsafe) {
     return unsafe.replace(/[<>&'"]/g, (c) => {
       switch (c) {
@@ -780,6 +902,7 @@ Phone: 269-808-0491`;
 
       // 4. Immediately purge sensitive SSN and banking fields from memory!
       purgeSensitiveData();
+      state.lastOnboardedData = data;
 
       // 5. Present result preview
       if (emailPreviewContent) emailPreviewContent.textContent = emailText;
@@ -990,6 +1113,29 @@ Phone: 269-808-0491`;
     btnBackToRoster.addEventListener("click", () => {
       const activeTabBtn = document.querySelector('[data-roster-tab="active"]');
       if (activeTabBtn) activeTabBtn.click();
+    });
+  }
+
+  if (btnDownloadReviewIcs) {
+    btnDownloadReviewIcs.addEventListener("click", () => {
+      const data = state.lastOnboardedData || getOnboardingFormData();
+      const targetName = data.nameTag || data.legalName;
+      if (!targetName) {
+        alert("Please enter employee details first.");
+        return;
+      }
+      generateReviewIcs(targetName, data.role, data.hireDate);
+      showToast(`Downloaded Outlook review invites (.ics) for ${targetName}!`, "success");
+    });
+  }
+
+  if (modalIcsBtn) {
+    modalIcsBtn.addEventListener("click", () => {
+      const member = state.currentEditingMember;
+      if (!member) return;
+      const hDate = extractHireDate(member);
+      generateReviewIcs(member.name, member.role, hDate);
+      showToast(`Downloaded Outlook review invites (.ics) for ${member.name}!`, "success");
     });
   }
 
