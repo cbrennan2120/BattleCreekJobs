@@ -23,8 +23,8 @@
   // Stat Elements
   const statActiveCount = document.getElementById("stat-active-count");
   const statInactiveCount = document.getElementById("stat-inactive-count");
-  const statTotalStaff = document.getElementById("stat-total-staff");
-  const statDirectoryCount = document.getElementById("stat-directory-count");
+  const statFacilityCount = document.getElementById("stat-facility-count");
+  const statCorpCount = document.getElementById("stat-corp-count");
 
   // Filter Elements
   const searchInput = document.getElementById("roster-search");
@@ -164,25 +164,27 @@
     const teamMembers = state.roster.filter((m) => m.category === "Team Member" || !m.category);
     const activeStaff = teamMembers.filter((m) => m.active);
     const inactiveStaff = teamMembers.filter((m) => !m.active);
-    const directory = state.roster.filter((m) => m.category && m.category !== "Team Member");
+    const facilityVendors = state.roster.filter((m) => m.category === "Facility Support" || m.category === "Vendors");
+    const hornCorp = state.roster.filter((m) => m.category === "Horn Group" || m.category === "PSP Corporate");
 
     if (statActiveCount) statActiveCount.textContent = activeStaff.length;
     if (statInactiveCount) statInactiveCount.textContent = inactiveStaff.length;
-    if (statTotalStaff) statTotalStaff.textContent = teamMembers.length;
-    if (statDirectoryCount) statDirectoryCount.textContent = directory.length;
+    if (statFacilityCount) statFacilityCount.textContent = facilityVendors.length;
+    if (statCorpCount) statCorpCount.textContent = hornCorp.length;
   }
 
   function getFilteredRoster() {
     const q = state.searchQuery.toLowerCase().trim();
     return state.roster.filter((item) => {
       const isTeam = item.category === "Team Member" || !item.category;
-      const isDirectory = !isTeam;
 
       // Tab matching
       if (state.activeTab === "active" && (!isTeam || !item.active)) return false;
       if (state.activeTab === "inactive" && (!isTeam || item.active)) return false;
-      if (state.activeTab === "directory" && !isDirectory) return false;
       if (state.activeTab === "all" && !isTeam) return false;
+      if (state.activeTab === "facility" && item.category !== "Facility Support" && item.category !== "Vendors") return false;
+      if (state.activeTab === "horngroup" && item.category !== "Horn Group" && item.category !== "PSP Corporate") return false;
+      if (state.activeTab === "sisterstores" && item.category !== "Sister Store") return false;
 
       // Search matching
       if (q) {
@@ -190,9 +192,10 @@
         const legalMatch = (item.legalName || "").toLowerCase().includes(q);
         const phoneMatch = (item.phone || "").replace(/\D/g, "").includes(q.replace(/\D/g, ""));
         const roleMatch = (item.role || "").toLowerCase().includes(q);
+        const categoryMatch = (item.category || "").toLowerCase().includes(q);
         const notesMatch = (item.notes || "").toLowerCase().includes(q);
         const tmNumMatch = String(item.teamMemberNumber || "").toLowerCase().includes(q);
-        if (!nameMatch && !legalMatch && !phoneMatch && !roleMatch && !notesMatch && !tmNumMatch) {
+        if (!nameMatch && !legalMatch && !phoneMatch && !roleMatch && !categoryMatch && !notesMatch && !tmNumMatch) {
           return false;
         }
       }
@@ -363,9 +366,10 @@
   // --- Modal Management ---
   function openAddModal() {
     state.editingId = null;
-    modalTitle.textContent = "Add Team Member";
+    modalTitle.textContent = "Add Contact / Team Member";
     memberForm.reset();
     inputCategory.value = "Team Member";
+    inputRole.value = "Cashier";
     inputActive.checked = true;
     memberModal.hidden = false;
     inputName.focus();
@@ -379,7 +383,7 @@
     inputLegalName.value = member.legalName || "";
     inputTmNumber.value = member.teamMemberNumber || "";
     inputPhone.value = member.phone || "";
-    inputRole.value = member.role || "Cashier Team Member";
+    inputRole.value = member.role || "Cashier";
     inputNotes.value = member.notes || "";
     inputActive.checked = member.active !== false;
     memberModal.hidden = false;
@@ -454,9 +458,10 @@
       return;
     }
 
-    const headers = ["Name", "Team Member #", "Phone", "Role", "Active", "Legal Name", "Notes"];
+    const headers = ["Name", "Category", "Team Member # / Acct #", "Phone", "Role", "Active", "Legal Name / Company", "Notes"];
     const rows = filtered.map((m) => [
       `"${(m.name || "").replace(/"/g, '""')}"`,
+      `"${(m.category || "Team Member").replace(/"/g, '""')}"`,
       `"${(m.teamMemberNumber || "").replace(/"/g, '""')}"`,
       `"${(m.phone || "").replace(/"/g, '""')}"`,
       `"${(m.role || "").replace(/"/g, '""')}"`,
@@ -537,6 +542,25 @@
       renderRoster();
     });
   });
+
+  if (inputCategory) {
+    inputCategory.addEventListener("change", () => {
+      const cat = inputCategory.value;
+      if (cat === "Facility Support") {
+        inputRole.value = "Facility Support";
+      } else if (cat === "Vendors") {
+        inputRole.value = "Vendors";
+      } else if (cat === "Horn Group") {
+        inputRole.value = "Horn Group";
+      } else if (cat === "PSP Corporate") {
+        inputRole.value = "PSP Corporate";
+      } else if (cat === "Sister Store") {
+        inputRole.value = "Sister Store";
+      } else if (cat === "Team Member") {
+        inputRole.value = "Cashier";
+      }
+    });
+  }
 
   // Close modal when clicking on backdrop
   if (memberModal) {

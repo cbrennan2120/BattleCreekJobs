@@ -147,7 +147,11 @@
       background: rgba(0, 122, 46, 0.08);
       color: var(--green-deep);
     }
-    .role-shift-leader, .role-store-team-leader, .role-assistant-team-leader {
+    .role-service-team-member {
+      background: rgba(0, 152, 206, 0.12);
+      color: #00739c;
+    }
+    .role-team-leader, .role-shift-leader, .role-store-team-leader, .role-assistant-store-team-leader, .role-assistant-team-leader {
       background: rgba(135, 45, 145, 0.12);
       color: #72207b;
     }
@@ -155,9 +159,29 @@
       background: rgba(0, 152, 206, 0.12);
       color: #00739c;
     }
-    .role-stock-team-member {
+    .role-stock, .role-stock-team-member {
       background: rgba(246, 190, 0, 0.15);
       color: #8c6a00;
+    }
+    .role-cashier, .role-cashier-team-member {
+      background: rgba(0, 175, 65, 0.12);
+      color: var(--green-deep);
+    }
+    .role-horn-group {
+      background: rgba(88, 28, 135, 0.12);
+      color: #581c87;
+    }
+    .role-psp-corporate {
+      background: rgba(30, 58, 138, 0.12);
+      color: #1e3a8a;
+    }
+    .role-vendors, .role-vendor-rep {
+      background: rgba(234, 88, 12, 0.12);
+      color: #c2410c;
+    }
+    .role-facility-support, .role-plumber, .role-electrician, .role-hvac---refrigeration {
+      background: rgba(51, 65, 85, 0.12);
+      color: #334155;
     }
 
     .status-pill {
@@ -410,12 +434,12 @@
             <span class="stat-value" id="stat-inactive-count">0</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Total Store Staff</span>
-            <span class="stat-value" id="stat-total-staff">0</span>
+            <span class="stat-label">Facility &amp; Vendors</span>
+            <span class="stat-value" id="stat-facility-count">0</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Directory &amp; Partners</span>
-            <span class="stat-value" id="stat-directory-count">0</span>
+            <span class="stat-label">Horn Group &amp; Corporate</span>
+            <span class="stat-value" id="stat-corp-count">0</span>
           </div>
         </div>
 
@@ -428,7 +452,7 @@
               <p class="manager-subtitle">Single source of truth for store team member numbers, contact details, active/inactive scheduling status, and franchise contacts.</p>
             </div>
             <div class="topbar-actions">
-              <button class="button button-primary" type="button" id="btn-add-member">+ Add Team Member</button>
+              <button class="button button-primary" type="button" id="btn-add-member">+ Add Contact</button>
               <button class="button button-secondary" type="button" id="admin-logout">Log out</button>
             </div>
           </div>
@@ -438,7 +462,9 @@
             <button class="admin-tab active" type="button" data-roster-tab="active">Active Team Members</button>
             <button class="admin-tab" type="button" data-roster-tab="inactive">Inactive / Archived</button>
             <button class="admin-tab" type="button" data-roster-tab="all">All Store Staff</button>
-            <button class="admin-tab" type="button" data-roster-tab="directory">Directory &amp; Partners</button>
+            <button class="admin-tab" type="button" data-roster-tab="facility">Facility &amp; Vendors</button>
+            <button class="admin-tab" type="button" data-roster-tab="horngroup">Horn Group &amp; Corporate</button>
+            <button class="admin-tab" type="button" data-roster-tab="sisterstores">Sister Stores</button>
           </nav>
 
           <!-- Toolbar: Search & Action Buttons -->
@@ -493,28 +519,29 @@
             <label for="modal-category">Category</label>
             <select id="modal-category" name="category" required>
               <option value="Team Member">Team Member (Store #0212)</option>
-              <option value="Store">Sister Store Contact</option>
-              <option value="District / Property">District / Property Support</option>
-              <option value="Support">Store Support / Delivery Van</option>
-              <option value="Contact">Franchise Leadership / Payroll</option>
+              <option value="Facility Support">Facility Support (Andy, Plumber, Electrician, HVAC)</option>
+              <option value="Vendors">Vendors (Vendor &amp; Brand Reps)</option>
+              <option value="Horn Group">Horn Group (Franchise Leadership &amp; Payroll)</option>
+              <option value="PSP Corporate">PSP Corporate (Corporate Contacts)</option>
+              <option value="Sister Store">Sister Store (Portage, Kalamazoo, Goshen)</option>
             </select>
           </div>
 
           <div class="modal-grid-2">
             <div class="field">
-              <label for="modal-name">Name Tag Name <span style="color: var(--red);">*</span></label>
-              <input id="modal-name" name="name" placeholder="e.g. Bri" required>
+              <label for="modal-name">Name Tag Name / Contact <span style="color: var(--red);">*</span></label>
+              <input id="modal-name" name="name" placeholder="e.g. Bri or Joe's Plumbing" required>
             </div>
             <div class="field">
-              <label for="modal-legal-name">Legal Name (Alias)</label>
-              <input id="modal-legal-name" name="legalName" placeholder="e.g. Brianna">
+              <label for="modal-legal-name">Legal Name / Company Name</label>
+              <input id="modal-legal-name" name="legalName" placeholder="e.g. Brianna or Apex Electric LLC">
             </div>
           </div>
 
           <div class="modal-grid-2">
             <div class="field">
-              <label for="modal-tm-number">Team Member #</label>
-              <input id="modal-tm-number" name="teamMemberNumber" placeholder="e.g. 75">
+              <label for="modal-tm-number">Team Member # / Acct #</label>
+              <input id="modal-tm-number" name="teamMemberNumber" placeholder="e.g. 75 or Acct #">
             </div>
             <div class="field">
               <label for="modal-phone">Phone Number</label>
@@ -525,15 +552,21 @@
           <div class="field">
             <label for="modal-role">Role / Position</label>
             <select id="modal-role" name="role">
-              <option value="Cashier Team Member">Cashier Team Member</option>
-              <option value="Stock Team Member">Stock Team Member</option>
-              <option value="Shift Leader">Shift Leader</option>
-              <option value="Assistant Team Leader">Assistant Team Leader</option>
+              <option value="Cashier">Cashier</option>
+              <option value="Stock">Stock</option>
+              <option value="Service Team Member">Service Team Member</option>
+              <option value="Team Leader">Team Leader</option>
+              <option value="Assistant Store Team Leader">Assistant Store Team Leader</option>
               <option value="Store Team Leader">Store Team Leader</option>
-              <option value="Groomer">Groomer</option>
-              <option value="Bather">Bather</option>
+              <option value="Horn Group">Horn Group (Franchise Leadership / Payroll)</option>
+              <option value="PSP Corporate">PSP Corporate (Corporate Contact)</option>
+              <option value="Vendors">Vendors (Vendor Representative)</option>
+              <option value="Facility Support">Facility Support (Property / Andy)</option>
+              <option value="Plumber">Plumber (Facility Support)</option>
+              <option value="Electrician">Electrician (Facility Support)</option>
+              <option value="HVAC / Refrigeration">HVAC / Refrigeration (Facility Support)</option>
               <option value="Sister Store">Sister Store</option>
-              <option value="Leadership">Franchise Leadership</option>
+              <option value="Groomer">Groomer</option>
               <option value="Other">Other / Support</option>
             </select>
           </div>
