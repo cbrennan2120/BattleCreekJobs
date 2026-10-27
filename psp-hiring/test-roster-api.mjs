@@ -28,21 +28,21 @@ async function runTests() {
   assert.strictEqual(bri.active, true);
   console.log("[PASS] Bri verified with TM #75 and Active=true.");
 
-  // Verify Facility Support (Andy) & Horn Group (Robyn) & PSP Corporate (Olivia)
+  // Verify Facility Support (Andy) & Corporate (Robyn & Olivia)
   const andy = getData.roster.find((m) => m.name === "Andy Freier");
   assert.ok(andy, "Andy Freier should exist");
-  assert.strictEqual(andy.category, "Facility Support");
-  console.log("[PASS] Andy Freier verified under Facility Support.");
+  assert.strictEqual(andy.role, "Facility Support");
+  console.log("[PASS] Andy Freier verified with role Facility Support.");
 
   const robyn = getData.roster.find((m) => m.name === "Robyn");
   assert.ok(robyn, "Robyn should exist");
-  assert.strictEqual(robyn.category, "Horn Group");
-  console.log("[PASS] Robyn verified under Horn Group.");
+  assert.strictEqual(robyn.role, "Corporate");
+  console.log("[PASS] Robyn verified with role Corporate.");
 
   const olivia = getData.roster.find((m) => m.name === "Olivia Perry");
   assert.ok(olivia, "Olivia Perry should exist");
-  assert.strictEqual(olivia.category, "PSP Corporate");
-  console.log("[PASS] Olivia Perry verified under PSP Corporate.");
+  assert.strictEqual(olivia.role, "Corporate");
+  console.log("[PASS] Olivia Perry verified with role Corporate.");
 
   // 2. Test POST (add new team member)
   const postReq = new Request("https://psp.battlecreekjobs.app/api/admin/roster", {
@@ -56,7 +56,7 @@ async function runTests() {
       legalName: "Jordan Smith",
       teamMemberNumber: "91",
       phone: "269-555-1234",
-      role: "Cashier Team Member",
+      role: "Cashier",
       active: true,
       notes: "Newly onboarded"
     })

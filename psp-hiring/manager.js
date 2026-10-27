@@ -26,6 +26,25 @@
   const statFacilityCount = document.getElementById("stat-facility-count");
   const statCorpCount = document.getElementById("stat-corp-count");
 
+  // View Containers
+  const rosterViewContainer = document.getElementById("roster-view-container");
+  const onboardingViewContainer = document.getElementById("onboarding-view-container");
+
+  // Onboarding Form Elements
+  const onboardingForm = document.getElementById("onboarding-form");
+  const obHireDateInput = document.getElementById("ob-hire-date");
+  const obDobInput = document.getElementById("ob-dob");
+  const obMinorCheckbox = document.getElementById("ob-minor");
+  const btnDownloadExcelOnly = document.getElementById("btn-download-excel-only");
+  const btnCopyEmailOnly = document.getElementById("btn-copy-email-only");
+  const btnResetOnboarding = document.getElementById("btn-reset-onboarding");
+  const onboardingResultBox = document.getElementById("onboarding-result-box");
+  const onboardingResultSummary = document.getElementById("onboarding-result-summary");
+  const emailPreviewContent = document.getElementById("email-preview-content");
+  const btnOpenEmailClient = document.getElementById("btn-open-email-client");
+  const btnCopyGeneratedEmail = document.getElementById("btn-copy-generated-email");
+  const btnBackToRoster = document.getElementById("btn-back-to-roster");
+
   // Filter Elements
   const searchInput = document.getElementById("roster-search");
   const tabButtons = Array.from(document.querySelectorAll("[data-roster-tab]"));
@@ -450,6 +469,321 @@
     }
   }
 
+  // --- Phase 2: Onboarding & Split-Flow Functions ---
+  function getOnboardingFormData() {
+    const legalName = (document.getElementById("ob-legal-name")?.value || "").trim();
+    const nameTag = (document.getElementById("ob-name-tag")?.value || "").trim();
+    const role = document.getElementById("ob-role")?.value || "Cashier";
+    const payRate = document.getElementById("ob-pay-rate")?.value || "13.73";
+    const hireDate = document.getElementById("ob-hire-date")?.value || formatDateYmd(new Date());
+    const pronouns = (document.getElementById("ob-pronouns")?.value || "").trim();
+    const teamMemberNumber = (document.getElementById("ob-tm-number")?.value || "").trim();
+    const targetHours = (document.getElementById("ob-target-hours")?.value || "").trim();
+
+    const phone = (document.getElementById("ob-phone")?.value || "").trim();
+    const email = (document.getElementById("ob-email")?.value || "").trim();
+    const address = (document.getElementById("ob-address")?.value || "").trim();
+    const emergencyContact = (document.getElementById("ob-emergency")?.value || "").trim();
+    const dob = document.getElementById("ob-dob")?.value || "";
+    const maritalStatus = document.getElementById("ob-marital")?.value || "Single";
+    const dependents = document.getElementById("ob-dependents")?.value || "0";
+    const shirtSize = document.getElementById("ob-shirt-size")?.value || "Medium";
+    const textOk = document.getElementById("ob-text-ok")?.checked !== false;
+    const minor = document.getElementById("ob-minor")?.checked === true;
+    const availNotes = (document.getElementById("ob-avail-notes")?.value || "").trim();
+
+    // Ephemeral fields
+    const ssn = (document.getElementById("ob-ssn")?.value || "").trim();
+    const depositType = document.getElementById("ob-deposit-type")?.value || "Direct Deposit";
+    const accountType = document.getElementById("ob-account-type")?.value || "Checking";
+    const bankName = (document.getElementById("ob-bank-name")?.value || "").trim();
+    const routingNumber = (document.getElementById("ob-routing-number")?.value || "").trim();
+    const accountNumber = (document.getElementById("ob-account-number")?.value || "").trim();
+
+    // Checklists
+    const chkI9 = document.getElementById("ob-chk-i9")?.checked !== false;
+    const chkVoid = document.getElementById("ob-chk-void")?.checked !== false;
+    const chkShirts = document.getElementById("ob-chk-shirts")?.checked !== false;
+    const chkPos = document.getElementById("ob-chk-pos")?.checked === true;
+
+    // Calculate age
+    let age = "";
+    if (dob) {
+      const birthDate = new Date(dob);
+      const hDate = new Date(hireDate || Date.now());
+      let calculatedAge = hDate.getFullYear() - birthDate.getFullYear();
+      const m = hDate.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && hDate.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      age = calculatedAge >= 0 ? String(calculatedAge) : "";
+    }
+
+    return {
+      legalName,
+      nameTag,
+      role,
+      payRate,
+      hireDate,
+      pronouns,
+      teamMemberNumber,
+      targetHours,
+      phone,
+      email,
+      address,
+      emergencyContact,
+      dob,
+      age,
+      maritalStatus,
+      dependents,
+      shirtSize,
+      textOk,
+      minor,
+      availNotes,
+      ssn,
+      depositType,
+      accountType,
+      bankName,
+      routingNumber,
+      accountNumber,
+      chkI9,
+      chkVoid,
+      chkShirts,
+      chkPos
+    };
+  }
+
+  function purgeSensitiveData() {
+    const ssnEl = document.getElementById("ob-ssn");
+    const routingEl = document.getElementById("ob-routing-number");
+    const acctEl = document.getElementById("ob-account-number");
+    if (ssnEl) ssnEl.value = "";
+    if (routingEl) routingEl.value = "";
+    if (acctEl) acctEl.value = "";
+  }
+
+  function generateRobynExcel(data) {
+    const wbData = [
+      ["Pet Supplies Plus New Hire Information", ""],
+      ["", ""],
+      ["Store #:", "#212"],
+      ["", ""],
+      ["Legal Name:", data.legalName],
+      ["", ""],
+      ["Address:", data.address],
+      ["", ""],
+      ["", ""],
+      ["Preferred pronouns:", data.pronouns || ""],
+      ["Name tag Name:", data.nameTag],
+      ["", ""],
+      ["E-MAIL:", data.email],
+      ["", ""],
+      ["", ""],
+      ["Date Of Birth:", data.dob || ""],
+      ["", ""],
+      ["Contact Phone #:", data.phone],
+      ["OK to Text this #? ", data.textOk ? "Yes" : "No"],
+      ["", ""],
+      ["Emergency Contact (Name/Phone):", data.emergencyContact],
+      ["", ""],
+      ["Married/Single:", data.maritalStatus],
+      ["", ""],
+      ["", ""],
+      ["HIRE DATE:", data.hireDate],
+      ["Age at Hire", data.age || ""],
+      ["Work Permit?", data.minor ? "Yes" : "N/A"],
+      ["", ""],
+      ["PAY RATE:", Number(data.payRate) || 13.73],
+      ["Dependents #", Number(data.dependents) || 0],
+      ["", ""],
+      ["CONFIDENTIAL PAYROLL & DIRECT DEPOSIT", ""],
+      ["SSN#:", data.ssn || ""],
+      ["Payment Preference:", data.depositType],
+      ["Bank / CU Name:", data.bankName || ""],
+      ["Routing #:", data.routingNumber || ""],
+      ["Account #:", data.accountNumber || ""],
+      ["Account Type:", data.accountType],
+      ["", ""],
+      ["This form must be completed legibly. Please ensure all information is printed neatly.", ""],
+      ["Students under the age of 18 must have a W-4/I-9 and a work permit from the school.", ""]
+    ];
+
+    const filename = `PSP_0212_NewHire_${(data.nameTag || "Employee").replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`;
+
+    if (window.XLSX && window.XLSX.utils) {
+      try {
+        const ws = window.XLSX.utils.aoa_to_sheet(wbData);
+        ws["!cols"] = [{ wch: 35 }, { wch: 45 }];
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        window.XLSX.writeFile(wb, filename);
+        return true;
+      } catch (err) {
+        console.warn("SheetJS write failed, falling back to SpreadsheetML", err);
+      }
+    }
+
+    // Fallback: Excel XML SpreadsheetML format
+    generateSpreadsheetML(wbData, filename.replace(/\.xlsx$/, ".xls"));
+    return true;
+  }
+
+  function generateSpreadsheetML(rows, filename) {
+    let xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles>
+ <Style ss:ID="Default" ss:Name="Normal"><Font ss:FontName="Calibri" ss:Size="11" ss:Color="#000000"/></Style>
+ <Style ss:ID="Header"><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1" ss:Color="#007A2E"/></Style>
+ <Style ss:ID="Label"><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/></Style>
+</Styles>
+<Worksheet ss:Name="Sheet1">
+<Table ss:DefaultColumnWidth="180">
+`;
+    rows.forEach((r, idx) => {
+      xml += " <Row>\n";
+      r.forEach((c, cIdx) => {
+        const val = escapeXml(String(c || ""));
+        const style = idx === 0 ? ' ss:StyleID="Header"' : cIdx === 0 && val ? ' ss:StyleID="Label"' : "";
+        xml += `  <Cell${style}><Data ss:Type="String">${val}</Data></Cell>\n`;
+      });
+      xml += " </Row>\n";
+    });
+    xml += `</Table></Worksheet></Workbook>`;
+
+    downloadBlob(xml, filename, "application/vnd.ms-excel;charset=utf-8;");
+  }
+
+  function escapeXml(unsafe) {
+    return unsafe.replace(/[<>&'"]/g, (c) => {
+      switch (c) {
+        case "<": return "&lt;";
+        case ">": return "&gt;";
+        case "&": return "&amp;";
+        case "'": return "&apos;";
+        case '"': return "&quot;";
+      }
+      return c;
+    });
+  }
+
+  function generateRobynEmailText(data) {
+    return `To: robynmsu2@yahoo.com
+CC: brandon.byron@gmail.com
+Subject: New Hire Onboarding - Store #0212 - ${data.legalName} (${data.role})
+
+Hi Robyn,
+
+Please find the new hire onboarding details for Store #0212 (Battle Creek) below:
+
+EMPLOYEE INFORMATION:
+• Legal Name: ${data.legalName}
+• Name Tag (Schedule Name): ${data.nameTag}
+• Position / Role: ${data.role}
+• Starting Wage: $${Number(data.payRate).toFixed(2)} / hr
+• Hire Date: ${data.hireDate}
+• Target Hours: ${data.targetHours || "Part-time (15-25 hrs/wk)"}
+• Contact Phone #: ${data.phone} (Text OK: ${data.textOk ? "Yes" : "No"})
+• E-MAIL: ${data.email}
+• Address: ${data.address || "On file"}
+• Preferred Pronouns: ${data.pronouns || "Not specified"}
+• Date Of Birth: ${data.dob || "N/A"} (Age: ${data.age || "N/A"}${data.minor ? " - School Work Permit required" : ""})
+• Married / Single: ${data.maritalStatus} | Dependents: ${data.dependents}
+• Emergency Contact: ${data.emergencyContact || "N/A"}
+
+CONFIDENTIAL PAYROLL & DIRECT DEPOSIT:
+• SSN#: ${data.ssn || "[Provided on I-9 / attachment]"}
+• Payment Preference: ${data.depositType}
+• Bank / Credit Union: ${data.bankName || "N/A"}
+• Routing #: ${data.routingNumber || "N/A"}
+• Account #: ${data.accountNumber || "N/A"} (${data.accountType})
+
+STORE ONBOARDING CHECKLIST:
+[${data.chkI9 ? "X" : " "}] Form I-9 & Form W-4 Completed
+[${data.chkVoid ? "X" : " "}] Direct Deposit Authorization / Voided Check
+[${data.chkShirts ? "X" : " "}] Uniform Shirts Issued (Size: ${data.shirtSize})
+[${data.chkPos ? "X" : " "}] D365 POS Register Login Requested
+
+ATTACHMENT:
+• PSP_0212_NewHire_${(data.nameTag || "Employee").replace(/[^a-zA-Z0-9]/g, "_")}.xlsx
+
+Thank you!
+Chris Brennan
+Store Team Leader • Store #0212
+Pet Supplies Plus Battle Creek
+1791 W Columbia Ave, Battle Creek, MI 49015
+Phone: 269-808-0491`;
+  }
+
+  async function saveOnboardingToRoster(data) {
+    const payload = {
+      category: "Team Member",
+      name: data.nameTag,
+      legalName: data.legalName !== data.nameTag ? data.legalName : "",
+      teamMemberNumber: data.teamMemberNumber,
+      phone: data.phone,
+      email: data.email,
+      role: data.role,
+      notes: `Hired: ${data.hireDate} | $${Number(data.payRate).toFixed(2)}/hr | Target: ${data.targetHours || "15-25h"}${data.availNotes ? " | " + data.availNotes : ""}`,
+      active: true
+    };
+
+    const res = await fetch("/api/admin/roster", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to save to master roster");
+    }
+
+    const resJson = await res.json();
+    state.roster.push(resJson.member);
+    updateStats();
+    return resJson.member;
+  }
+
+  async function handleOnboardingSubmit(e) {
+    if (e) e.preventDefault();
+    const data = getOnboardingFormData();
+
+    if (!data.legalName || !data.nameTag || !data.phone || !data.email) {
+      alert("Please fill in Legal Name, Name Tag, Phone, and Email.");
+      return;
+    }
+
+    try {
+      // 1. Generate & download Robyn's Excel workbook
+      generateRobynExcel(data);
+
+      // 2. Generate notification email text
+      const emailText = generateRobynEmailText(data);
+
+      // 3. Save operational record to Master Roster API
+      const savedMember = await saveOnboardingToRoster(data);
+
+      // 4. Immediately purge sensitive SSN and banking fields from memory!
+      purgeSensitiveData();
+
+      // 5. Present result preview
+      if (emailPreviewContent) emailPreviewContent.textContent = emailText;
+      if (onboardingResultSummary) {
+        onboardingResultSummary.textContent = `Downloaded Robyn's Excel form and added ${savedMember.name} (#${savedMember.teamMemberNumber || "Pending"}) to Store #0212 Master Roster. SSN and bank details have been purged from memory.`;
+      }
+      if (onboardingResultBox) onboardingResultBox.hidden = false;
+
+      // Scroll to result preview
+      onboardingResultBox.scrollIntoView({ behavior: "smooth" });
+      showToast(`Onboarding completed! ${savedMember.name} added to roster.`, "success");
+    } catch (err) {
+      console.error(err);
+      showToast("Error processing onboarding. Check server connection.", "error");
+    }
+  }
+
   // --- Export Utilities ---
   function exportCsv() {
     const filtered = getFilteredRoster();
@@ -539,9 +873,112 @@
       tabButtons.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       state.activeTab = btn.getAttribute("data-roster-tab");
-      renderRoster();
+
+      if (state.activeTab === "onboarding") {
+        if (rosterViewContainer) rosterViewContainer.hidden = true;
+        if (onboardingViewContainer) onboardingViewContainer.hidden = false;
+      } else {
+        if (rosterViewContainer) rosterViewContainer.hidden = false;
+        if (onboardingViewContainer) onboardingViewContainer.hidden = true;
+        renderRoster();
+      }
     });
   });
+
+  // Onboarding Form Event Listeners
+  if (onboardingForm) {
+    onboardingForm.addEventListener("submit", handleOnboardingSubmit);
+  }
+
+  if (obHireDateInput && !obHireDateInput.value) {
+    obHireDateInput.value = formatDateYmd(new Date());
+  }
+
+  if (obDobInput) {
+    obDobInput.addEventListener("change", () => {
+      const val = obDobInput.value;
+      if (!val) return;
+      const bDate = new Date(val);
+      const today = new Date();
+      let diffAge = today.getFullYear() - bDate.getFullYear();
+      const m = today.getMonth() - bDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < bDate.getDate())) {
+        diffAge--;
+      }
+      if (obMinorCheckbox) {
+        obMinorCheckbox.checked = diffAge < 18;
+      }
+    });
+  }
+
+  if (btnDownloadExcelOnly) {
+    btnDownloadExcelOnly.addEventListener("click", () => {
+      const data = getOnboardingFormData();
+      if (!data.legalName || !data.nameTag) {
+        alert("Please enter at least Legal Name and Name Tag to download form.");
+        return;
+      }
+      generateRobynExcel(data);
+      showToast("Downloaded Robyn's Excel form.", "success");
+    });
+  }
+
+  if (btnCopyEmailOnly) {
+    btnCopyEmailOnly.addEventListener("click", () => {
+      const data = getOnboardingFormData();
+      if (!data.legalName || !data.nameTag) {
+        alert("Please enter employee details first.");
+        return;
+      }
+      const text = generateRobynEmailText(data);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Copied Robyn notification email to clipboard!", "success");
+      }).catch(() => {
+        showToast("Error copying to clipboard.", "error");
+      });
+    });
+  }
+
+  if (btnResetOnboarding) {
+    btnResetOnboarding.addEventListener("click", () => {
+      if (confirm("Reset new hire onboarding form?")) {
+        onboardingForm.reset();
+        purgeSensitiveData();
+        if (obHireDateInput) obHireDateInput.value = formatDateYmd(new Date());
+        if (onboardingResultBox) onboardingResultBox.hidden = true;
+        showToast("Onboarding form reset.", "info");
+      }
+    });
+  }
+
+  if (btnCopyGeneratedEmail) {
+    btnCopyGeneratedEmail.addEventListener("click", () => {
+      const content = emailPreviewContent ? emailPreviewContent.textContent : "";
+      if (!content) return;
+      navigator.clipboard.writeText(content).then(() => {
+        showToast("Email text copied to clipboard!", "success");
+      }).catch(() => {
+        showToast("Error copying to clipboard.", "error");
+      });
+    });
+  }
+
+  if (btnOpenEmailClient) {
+    btnOpenEmailClient.addEventListener("click", () => {
+      const data = getOnboardingFormData();
+      const subject = encodeURIComponent(`New Hire Onboarding - Store #0212 - ${data.legalName || data.nameTag} (${data.role})`);
+      const body = encodeURIComponent(emailPreviewContent ? emailPreviewContent.textContent : generateRobynEmailText(data));
+      const mailtoUrl = `mailto:robynmsu2@yahoo.com?cc=brandon.byron@gmail.com&subject=${subject}&body=${body}`;
+      window.open(mailtoUrl, "_blank");
+    });
+  }
+
+  if (btnBackToRoster) {
+    btnBackToRoster.addEventListener("click", () => {
+      const activeTabBtn = document.querySelector('[data-roster-tab="active"]');
+      if (activeTabBtn) activeTabBtn.click();
+    });
+  }
 
   if (inputCategory) {
     inputCategory.addEventListener("change", () => {
@@ -549,11 +986,9 @@
       if (cat === "Facility Support") {
         inputRole.value = "Facility Support";
       } else if (cat === "Vendors") {
-        inputRole.value = "Vendors";
-      } else if (cat === "Horn Group") {
-        inputRole.value = "Horn Group";
-      } else if (cat === "PSP Corporate") {
-        inputRole.value = "PSP Corporate";
+        inputRole.value = "Vendor";
+      } else if (cat === "Horn Group" || cat === "PSP Corporate") {
+        inputRole.value = "Corporate";
       } else if (cat === "Sister Store") {
         inputRole.value = "Sister Store";
       } else if (cat === "Team Member") {
