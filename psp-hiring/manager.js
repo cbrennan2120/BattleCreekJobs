@@ -504,6 +504,7 @@
     const chkI9 = document.getElementById("ob-chk-i9")?.checked !== false;
     const chkVoid = document.getElementById("ob-chk-void")?.checked !== false;
     const chkShirts = document.getElementById("ob-chk-shirts")?.checked !== false;
+    const chkTalentTank = document.getElementById("ob-chk-talent-tank")?.checked !== false;
     const chkPos = document.getElementById("ob-chk-pos")?.checked === true;
 
     // Calculate age
@@ -549,6 +550,7 @@
       chkI9,
       chkVoid,
       chkShirts,
+      chkTalentTank,
       chkPos
     };
   }
@@ -704,6 +706,7 @@ STORE ONBOARDING CHECKLIST:
 [${data.chkI9 ? "X" : " "}] Form I-9 & Form W-4 Completed
 [${data.chkVoid ? "X" : " "}] Direct Deposit Authorization / Voided Check
 [${data.chkShirts ? "X" : " "}] Uniform Shirts Issued (Size: ${data.shirtSize})
+[${data.chkTalentTank ? "X" : " "}] Talent Tank Account Created (Store #0212)
 [${data.chkPos ? "X" : " "}] D365 POS Register Login Requested
 
 ATTACHMENT:

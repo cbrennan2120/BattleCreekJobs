@@ -527,6 +527,7 @@
         </div>
       </div>
       <div class="topbar-actions">
+        <a class="button button-secondary" href="https://pspgroup.myabsorb.com/?KeyName=PSP%20Store%200212#/" target="_blank" rel="noopener noreferrer">Talent Tank LMS ↗</a>
         <a class="button button-secondary" href="/admin.html">Hiring Applicants</a>
         <a class="button button-secondary" href="/index.html" target="_blank">Step 1 Public Form</a>
         <a class="button button-secondary" href="/PSPNewHire/Orientation/" target="_blank">Orientation Slides</a>
@@ -887,6 +888,7 @@
                     <label class="checklist-item"><input type="checkbox" id="ob-chk-i9" checked> <span>I-9 &amp; W-4 Forms Completed</span></label>
                     <label class="checklist-item"><input type="checkbox" id="ob-chk-void" checked> <span>Voided Check / Direct Deposit Form</span></label>
                     <label class="checklist-item"><input type="checkbox" id="ob-chk-shirts" checked> <span>Uniform Shirts Issued</span></label>
+                    <label class="checklist-item"><input type="checkbox" id="ob-chk-talent-tank" checked> <span>Talent Tank Account Created (<a href="https://pspgroup.myabsorb.com/?KeyName=PSP%20Store%200212#/" target="_blank" rel="noopener noreferrer" style="color: var(--green-deep); text-decoration: underline; font-weight: 700;">Open Talent Tank ↗</a>)</span></label>
                     <label class="checklist-item"><input type="checkbox" id="ob-chk-pos"> <span>Request D365 POS Cashier ID</span></label>
                   </div>
                 </div>
@@ -896,6 +898,9 @@
                   <button class="button button-primary" type="submit" id="btn-submit-onboarding" style="padding: 12px 24px; font-size: 1rem;">
                     🚀 Complete Onboarding (Excel + Email + Roster)
                   </button>
+                  <a href="https://pspgroup.myabsorb.com/?KeyName=PSP%20Store%200212#/" target="_blank" rel="noopener noreferrer" class="button button-secondary" id="btn-open-talent-tank" title="Open Store #0212 Talent Tank registration portal">
+                    🎓 Talent Tank (Store 0212) ↗
+                  </a>
                   <button class="button button-secondary" type="button" id="btn-download-excel-only">
                     📥 Download Robyn .xlsx Only
                   </button>
@@ -916,6 +921,18 @@
                     <button class="button button-secondary" type="button" id="btn-open-email-client">📬 Open in Mail App</button>
                   </div>
                   <p class="manager-subtitle" id="onboarding-result-summary" style="margin-bottom: 14px;"></p>
+
+                  <!-- Talent Tank Direct Next Step Card -->
+                  <div style="background: rgba(0, 175, 65, 0.08); border: 1px solid var(--green); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                      <strong style="color: var(--green-deep); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                        <span>🎓</span> Next Step: Create Team Member in Talent Tank
+                      </strong>
+                      <span style="font-size: 0.85rem; color: var(--text);">Click below to open Store #0212 Talent Tank and create their learning account for Orientation &amp; Beyond Hello training.</span>
+                    </div>
+                    <a href="https://pspgroup.myabsorb.com/?KeyName=PSP%20Store%200212#/" target="_blank" rel="noopener noreferrer" class="button button-primary" style="padding: 8px 16px; font-size: 0.85rem;">Create TM in Talent Tank ↗</a>
+                  </div>
+
                   <label style="font-weight: 700; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; display: block;">Notification Email Draft (To: robynmsu2@yahoo.com)</label>
                   <pre class="email-preview-box" id="email-preview-content"></pre>
                   <div style="display: flex; gap: 10px; margin-top: 12px;">
